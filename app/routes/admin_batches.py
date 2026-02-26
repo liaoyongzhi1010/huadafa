@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import secrets
+from datetime import date
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_303_SEE_OTHER
 
 from app.db import get_db
-from app.models import AntiCode, Batch
+from app.models import AntiCode, Batch, Product
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 templates = Jinja2Templates(directory="app/templates")
@@ -95,3 +96,73 @@ def batch_detail(request: Request, batch_id: int, db: Session = Depends(get_db))
         "admin/batch_detail.html",
         {"batch": batch, "code_count": int(code_count)},
     )
+
+
+@router.get("/products/{product_id}/batches")
+def product_batches_list(request: Request, product_id: int, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    batches = (
+        db.execute(
+            select(Batch).where(Batch.product_id == product_id).order_by(desc(Batch.id))
+        )
+        .scalars()
+        .all()
+    )
+    return templates.TemplateResponse(
+        request,
+        "admin/batches_list.html",
+        {"product": product, "batches": batches},
+    )
+
+
+@router.get("/products/{product_id}/batches/new")
+def product_batch_new_page(request: Request, product_id: int, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    return templates.TemplateResponse(
+        request,
+        "admin/batch_new.html",
+        {"product": product, "today": date.today().isoformat()},
+    )
+
+
+@router.post("/products/{product_id}/batches/new")
+def product_batch_new_submit(
+    request: Request,
+    product_id: int,
+    production_date: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    try:
+        parsed_date = date.fromisoformat(production_date)
+    except ValueError:
+        parsed_date = date.today()
+
+    batch = Batch(product_id=product_id, production_date=parsed_date, note=note)
+    db.add(batch)
+    db.commit()
+    db.refresh(batch)
+
+    return RedirectResponse(url=f"/admin/batches/{batch.id}", status_code=HTTP_303_SEE_OTHER)

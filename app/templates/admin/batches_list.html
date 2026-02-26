@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}批次管理{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="title center">批次管理</div>
+      <div class="muted center">产品：{{ product.name }}（ID {{ product.id }}）</div>
+      <div style="height:10px;"></div>
+      <a class="btn" href="/admin/products/{{ product.id }}/batches/new">新增批次</a>
+      <div class="hr"></div>
+      {% if batches and batches|length > 0 %}
+        {% for b in batches %}
+          <div style="padding:10px 0; border-bottom:1px solid #f3f4f6;">
+            <div style="font-weight:700;">批次 {{ b.id }} / {{ b.production_date }}</div>
+            <div class="muted">{{ b.note }}</div>
+            <div style="margin-top:6px;">
+              <a class="muted" href="/admin/batches/{{ b.id }}">进入批次</a>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="muted center">暂无批次</div>
+      {% endif %}
+      <div style="height:10px;"></div>
+      <a class="muted" href="/admin/products">返回产品列表</a>
+    </div>
+  </div>
+{% endblock %}
+

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}新增批次{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="title center">新增批次</div>
+      <div class="muted center">产品：{{ product.name }}（ID {{ product.id }}）</div>
+      <div style="height:10px;"></div>
+      <form method="post" action="/admin/products/{{ product.id }}/batches/new">
+        <div style="margin-bottom:10px;">
+          <div class="muted">生产日期</div>
+          <input name="production_date" value="{{ today }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:14px;">
+          <div class="muted">备注</div>
+          <input name="note" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <button class="btn" type="submit">创建批次</button>
+      </form>
+      <div style="height:10px;"></div>
+      <a class="muted" href="/admin/products/{{ product.id }}/batches">返回批次列表</a>
+    </div>
+  </div>
+{% endblock %}
+
