@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import re
 
-from fastapi import APIRouter, Depends, HTTPException
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 
@@ -15,6 +18,7 @@ from app.models import (
     ScanEvent,
     VerifyConfig,
 )
+from app.services.track_scan import track_scan
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 
@@ -128,3 +132,54 @@ def verify(code: str, db: Session = Depends(get_db)):
         "recommendations": [{"image_url": r.image_url, "target_url": r.target_url} for r in recs],
         "recent_events": recent_events,
     }
+
+
+class TrackVerifyRequest(BaseModel):
+    code: str
+
+
+@router.post("/verify/track")
+def track_verify(payload: TrackVerifyRequest, request: Request, db: Session = Depends(get_db)):
+    code = payload.code
+    if not _CODE_RE.match(code):
+        raise HTTPException(status_code=422, detail="invalid_code")
+
+    anti_code = db.execute(select(AntiCode).where(AntiCode.code == code)).scalar_one_or_none()
+    if anti_code is None:
+        cfg = _load_verify_config(db)
+        return JSONResponse(
+            status_code=404,
+            content={"status": "not_found", "message": cfg["text_not_found"]},
+        )
+
+    if anti_code.status != "active" or (anti_code.batch is not None and anti_code.batch.status != "active"):
+        return JSONResponse(status_code=410, content={"status": "disabled"})
+
+    visitor_id = request.cookies.get("visitor_id")
+    set_cookie = False
+    if not visitor_id:
+        visitor_id = uuid.uuid4().hex
+        set_cookie = True
+
+    client_host = request.client.host if request.client else ""
+    user_agent = request.headers.get("user-agent", "")
+
+    result = track_scan(
+        db=db,
+        anti_code=anti_code,
+        visitor_id=visitor_id,
+        ip=client_host,
+        user_agent=user_agent,
+        dedupe_seconds=60,
+    )
+
+    resp = JSONResponse(content={"deduped": result.deduped, "scan_count": result.scan_count})
+    if set_cookie:
+        resp.set_cookie(
+            "visitor_id",
+            visitor_id,
+            max_age=60 * 60 * 24 * 365,
+            httponly=True,
+            samesite="lax",
+        )
+    return resp
