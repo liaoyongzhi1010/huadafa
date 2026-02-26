@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}防伪查询{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="center">
+        {% if status == "genuine" %}
+          <div class="big">{% if show_code %}{{ code }}{% else %}✓{% endif %}</div>
+        {% endif %}
+        <div class="title">{{ message }}</div>
+        {% if status == "genuine" %}
+          <div class="muted">此防伪码已验证 <span id="scanCount">{{ scan_count }}</span> 次</div>
+          {% if scan_count > 1 %}
+            <div class="muted">已被查询过</div>
+          {% endif %}
+          {% if warning_active %}
+            <div class="danger" style="margin-top:10px;">{{ text_warning }}</div>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      {% if status == "genuine" %}
+        <div class="hr"></div>
+        {% if recent_events and recent_events|length > 0 %}
+          <div class="muted" style="font-weight:700;">最近验证时间</div>
+          <div class="muted">
+            {% for t in recent_events %}
+              <div>{{ t }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if recommendations and recommendations|length > 0 %}
+          <div class="hr"></div>
+          {% set r0 = recommendations[0] %}
+          <a href="{{ r0.target_url }}" style="display:block; text-decoration:none;">
+            <img src="{{ r0.image_url }}" alt="推荐" style="width:100%; border-radius:12px;" />
+          </a>
+        {% endif %}
+
+        <div class="hr"></div>
+        <div class="tabs">
+          <div class="tab">产品信息</div>
+          <div class="tab">品牌溯源</div>
+          <div class="tab">关于我们</div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="height:12px;"></div>
+    {% if contact_us_url %}
+      <a class="btn" href="{{ contact_us_url }}">联系我们</a>
+    {% endif %}
+  </div>
+
+  {% if status == "genuine" %}
+  <script>
+    (function () {
+      fetch("/api/public/verify/track", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({code: "{{ code }}"}),
+      }).then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data && typeof data.scan_count === "number") {
+            var el = document.getElementById("scanCount");
+            if (el) el.textContent = String(data.scan_count);
+          }
+        })
+        .catch(function () {});
+    })();
+  </script>
+  {% endif %}
+{% endblock %}
+
