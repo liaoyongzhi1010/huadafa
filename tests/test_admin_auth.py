@@ -34,6 +34,10 @@ def test_admin_login_success_sets_session_and_allows_admin():
 
     r2 = client.get("/admin", follow_redirects=False)
     assert r2.status_code == 200
+    assert "/admin/products" in r2.text
+    assert "/admin/config" in r2.text
+    assert "/admin/content" in r2.text
+    assert "/admin/recommendations" in r2.text
 
 
 def test_admin_login_wrong_password_shows_error():
