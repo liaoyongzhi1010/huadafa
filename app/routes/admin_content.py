@@ -2,17 +2,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_303_SEE_OTHER
 
 from app.db import get_db
 from app.models import PageContent
+from app.web import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _require_admin(request: Request):
@@ -72,4 +70,3 @@ def content_submit(
     db.commit()
 
     return RedirectResponse(url="/admin/content", status_code=HTTP_303_SEE_OTHER)
-

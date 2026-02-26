@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_303_SEE_OTHER
 
 from app.db import get_db
 from app.models import Product
+from app.services.uploads import save_product_detail_image
+from app.web import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _require_admin(request: Request):
@@ -55,3 +54,58 @@ def product_new_submit(
     db.commit()
     return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
 
+
+@router.get("/products/{product_id}/edit")
+def product_edit_page(request: Request, product_id: int, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    return templates.TemplateResponse(
+        request,
+        "admin/product_edit.html",
+        {"product": product},
+    )
+
+
+@router.post("/products/{product_id}/edit")
+def product_edit_submit(
+    request: Request,
+    product_id: int,
+    name: str = Form(...),
+    detail_text: str = Form(""),
+    clear_images: str | None = Form(None),
+    detail_images: list[UploadFile] = File(default_factory=list),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    product.name = name.strip()
+    product.detail_text = detail_text
+
+    if clear_images is not None:
+        product.detail_images = []
+
+    images = list(product.detail_images or [])
+    for upload in detail_images:
+        if not upload.filename:
+            continue
+        url = save_product_detail_image(product_id=product.id, upload=upload)
+        images.append({"url": url})
+
+    product.detail_images = images
+
+    db.add(product)
+    db.commit()
+
+    return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)

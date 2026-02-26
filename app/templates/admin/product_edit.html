@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}编辑产品{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="title center">编辑产品</div>
+      <div class="muted center">ID {{ product.id }}</div>
+      <div style="height:10px;"></div>
+      <form method="post" action="/admin/products/{{ product.id }}/edit" enctype="multipart/form-data">
+        <div style="margin-bottom:10px;">
+          <div class="muted">产品名称</div>
+          <input name="name" required value="{{ product.name }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:14px;">
+          <div class="muted">产品详情文字</div>
+          <textarea name="detail_text" rows="6" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;">{{ product.detail_text }}</textarea>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <div class="muted">产品详情图片（可多选）</div>
+          <input type="file" name="detail_images" multiple />
+        </div>
+        <div style="margin: 10px 0 14px;">
+          <label>
+            <input type="checkbox" name="clear_images" />
+            清空现有图片
+          </label>
+        </div>
+
+        {% if product.detail_images and product.detail_images|length > 0 %}
+          <div class="hr"></div>
+          <div class="muted" style="font-weight:700;">当前图片</div>
+          {% for img in product.detail_images %}
+            <div style="margin-top:10px;">
+              <img src="{{ img.url }}" alt="img" style="width:100%; border-radius:12px;" />
+              <div class="muted" style="word-break: break-all;">{{ img.url }}</div>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <div style="height:14px;"></div>
+        <button class="btn" type="submit">保存</button>
+      </form>
+      <div style="height:10px;"></div>
+      <a class="muted" href="/admin/products">返回列表</a>
+    </div>
+  </div>
+{% endblock %}
+

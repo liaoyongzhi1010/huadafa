@@ -3,16 +3,14 @@ from __future__ import annotations
 import re
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import AntiCode, PageContent, Recommendation, ScanEvent, VerifyConfig
+from app.web import templates
 
 router = APIRouter(tags=["public-pages"])
-
-templates = Jinja2Templates(directory="app/templates")
 
 _CODE_RE = re.compile(r"^\d{16}$")
 

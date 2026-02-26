@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from starlette.status import HTTP_303_SEE_OTHER
 
 from app.settings import get_settings
+from app.web import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/login")
@@ -40,4 +38,3 @@ def login_submit(
 def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/admin/login", status_code=HTTP_303_SEE_OTHER)
-

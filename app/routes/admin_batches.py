@@ -5,7 +5,6 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import desc, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -13,9 +12,9 @@ from starlette.status import HTTP_303_SEE_OTHER
 
 from app.db import get_db
 from app.models import AntiCode, Batch, Product
+from app.web import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-templates = Jinja2Templates(directory="app/templates")
 
 
 def _require_admin(request: Request):

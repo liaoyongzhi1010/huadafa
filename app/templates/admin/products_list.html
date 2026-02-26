@@ -14,6 +14,8 @@
             <div class="muted">ID: {{ p.id }}</div>
             <div style="margin-top:6px;">
               <a class="muted" href="/admin/products/{{ p.id }}/batches">管理批次</a>
+              &nbsp;·&nbsp;
+              <a class="muted" href="/admin/products/{{ p.id }}/edit">编辑</a>
             </div>
           </div>
         {% endfor %}
