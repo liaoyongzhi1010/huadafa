@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}使用文档{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="title center">使用文档</div>
+      <div class="muted center">产品 → 批次 → 生成防伪码 → 导出 → 配置</div>
+      <div class="hr"></div>
+
+      <div style="font-weight:800;">1）创建产品</div>
+      <div class="muted" style="margin-top:6px;">
+        进入「产品管理」→ 新增产品 → 填写产品名称、产品详情文字；如需展示图片，请在编辑页上传产品详情图片（可多选）。
+      </div>
+
+      <div style="height:14px;"></div>
+      <div style="font-weight:800;">2）创建批次</div>
+      <div class="muted" style="margin-top:6px;">
+        在产品列表中进入「管理批次」→ 新增批次 → 生产日期默认今天（再次生成一批码相当于新批次）。
+      </div>
+
+      <div style="height:14px;"></div>
+      <div style="font-weight:800;">3）生成防伪码</div>
+      <div class="muted" style="margin-top:6px;">
+        进入批次详情 → 输入生成数量（单次 ≤ 10000）→ 生成后可在该批次内导出数据与二维码。
+      </div>
+
+      <div style="height:14px;"></div>
+      <div style="font-weight:800;">4）导出</div>
+      <div class="muted" style="margin-top:6px;">
+        批次详情支持导出：
+        <div style="margin-top:6px;">- CSV：包含防伪码与验证链接</div>
+        <div>- 二维码 ZIP：每个码一张 PNG，二维码内容为：<span style="font-weight:700;">https://1918imco.com/verify?code=16位数字</span></div>
+      </div>
+
+      <div style="height:14px;"></div>
+      <div style="font-weight:800;">5）验证页配置</div>
+      <div class="muted" style="margin-top:6px;">
+        在「验证页配置」中可设置：防伪码显隐、警示阈值、展示最近验证条数、正品/未查到/警示文案、联系我们跳转链接。
+      </div>
+
+      <div style="height:14px;"></div>
+      <div style="font-weight:800;">6）固定内容与商品推荐</div>
+      <div class="muted" style="margin-top:6px;">
+        「固定内容」用于配置：品牌溯源 / 关于我们（图文以文本为主）。「商品推荐」可配置推荐图与跳转链接（无图不展示）。
+      </div>
+
+      <div class="hr"></div>
+      <div style="font-weight:800;">FAQ：什么算扫成功一次？</div>
+      <div class="muted" style="margin-top:6px;">
+        系统以“打开验证页并完成一次有效校验/计数”为一次扫码成功。为避免重复刷新误计数：同一防伪码在同一设备 60 秒内重复打开只计 1 次。
+      </div>
+
+      <div style="height:12px;"></div>
+      <a class="muted" href="/admin">返回后台</a>
+    </div>
+  </div>
+{% endblock %}
+

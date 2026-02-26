@@ -15,3 +15,10 @@ def admin_index(request: Request):
     if not request.session.get("admin_logged_in"):
         return RedirectResponse(url="/admin/login", status_code=HTTP_303_SEE_OTHER)
     return templates.TemplateResponse(request, "admin/index.html", {})
+
+
+@router.get("/help")
+def admin_help(request: Request):
+    if not request.session.get("admin_logged_in"):
+        return RedirectResponse(url="/admin/login", status_code=HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(request, "admin/help.html", {})
