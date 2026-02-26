@@ -87,7 +87,7 @@ def verify_page(request: Request, code: str, db: Session = Depends(get_db)):
                 visitor_id=str(visitor_id),
                 ip=client_host,
                 user_agent=user_agent,
-                dedupe_seconds=60,
+                dedupe_seconds=3,
             )
             scan_count = result.scan_count
             warning_active = scan_count >= warning_threshold

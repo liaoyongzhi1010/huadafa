@@ -44,7 +44,7 @@ def admin_index(request: Request, db: Session = Depends(get_db)):
             select(AntiCode.code, AntiCode.scan_count)
             .where(AntiCode.scan_count > 0)
             .order_by(AntiCode.scan_count.desc(), AntiCode.id.desc())
-            .limit(5)
+            .limit(10)
         )
         .all()
     )

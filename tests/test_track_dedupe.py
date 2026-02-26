@@ -57,7 +57,7 @@ def _seed_code(SessionLocal, code: str) -> int:
         return anti_code.id
 
 
-def test_track_increments_once_and_dedupes_within_60s(client_and_sessionmaker):
+def test_track_increments_once_and_dedupes_within_3s(client_and_sessionmaker):
     client, SessionLocal = client_and_sessionmaker
     anti_code_id = _seed_code(SessionLocal, "1111222233334444")
 
@@ -89,7 +89,7 @@ def test_track_increments_once_and_dedupes_within_60s(client_and_sessionmaker):
         assert refreshed.scan_count == 1
 
 
-def test_track_allows_again_after_60s(client_and_sessionmaker):
+def test_track_allows_again_after_3s(client_and_sessionmaker):
     client, SessionLocal = client_and_sessionmaker
     anti_code_id = _seed_code(SessionLocal, "2222333344445555")
 
@@ -108,7 +108,7 @@ def test_track_allows_again_after_60s(client_and_sessionmaker):
             .first()
         )
         assert event is not None
-        event.scanned_at = datetime.now(timezone.utc) - timedelta(seconds=61)
+        event.scanned_at = datetime.now(timezone.utc) - timedelta(seconds=4)
         db.commit()
 
     r2 = client.post(
@@ -119,4 +119,3 @@ def test_track_allows_again_after_60s(client_and_sessionmaker):
     assert r2.status_code == 200
     assert r2.json()["deduped"] is False
     assert r2.json()["scan_count"] == 2
-

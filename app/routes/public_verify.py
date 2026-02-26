@@ -170,7 +170,7 @@ def track_verify(payload: TrackVerifyRequest, request: Request, db: Session = De
         visitor_id=visitor_id,
         ip=client_host,
         user_agent=user_agent,
-        dedupe_seconds=60,
+        dedupe_seconds=3,
     )
 
     resp = JSONResponse(content={"deduped": result.deduped, "scan_count": result.scan_count})
