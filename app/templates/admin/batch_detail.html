@@ -8,6 +8,10 @@
       <div class="muted">生产日期：{{ batch.production_date }}</div>
       <div class="muted">防伪码数量：{{ code_count }}</div>
       <div class="hr"></div>
+      <a class="btn" href="/admin/batches/{{ batch.id }}/export/csv">导出 CSV</a>
+      <div style="height:10px;"></div>
+      <a class="btn" href="/admin/batches/{{ batch.id }}/export/qrcodes.zip">导出二维码 ZIP</a>
+      <div class="hr"></div>
       <form method="post" action="/admin/batches/{{ batch.id }}/codes/generate">
         <div style="margin-bottom:14px;">
           <div class="muted">生成数量（<=10000）</div>
@@ -20,4 +24,3 @@
     </div>
   </div>
 {% endblock %}
-
