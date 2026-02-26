@@ -46,10 +46,14 @@
                     </div>
                   </td>
                   <td>
-                    <form method="post" action="/admin/batches/{{ b.id }}/codes/generate" style="display:flex; gap:10px; align-items:center; margin:0;">
-                      <input class="input" name="quantity" value="100" style="max-width:120px;" />
-                      <button class="btn btn-primary" type="submit">生成</button>
-                    </form>
+                    {% if row.code_count == 0 %}
+                      <form method="post" action="/admin/batches/{{ b.id }}/codes/generate" style="display:flex; gap:10px; align-items:center; margin:0;">
+                        <input class="input" name="quantity" value="100" style="max-width:120px;" />
+                        <button class="btn btn-primary" type="submit">生成</button>
+                      </form>
+                    {% else %}
+                      <div class="muted" style="font-weight:800;">已生成</div>
+                    {% endif %}
                   </td>
                 </tr>
               {% endfor %}

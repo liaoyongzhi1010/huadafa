@@ -88,6 +88,7 @@ def test_admin_dashboard_shows_basic_stats(admin_client_and_sessionmaker):
 
     r = client.get("/admin")
     assert r.status_code == 200
+    assert "数据统计" in r.text
     assert "今日扫码" in r.text
     assert "近7天扫码" in r.text
     assert "防伪码总数" in r.text
