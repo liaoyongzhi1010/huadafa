@@ -39,10 +39,49 @@
         {% endif %}
 
         <div class="hr"></div>
-        <div class="tabs">
-          <div class="tab">产品信息</div>
-          <div class="tab">品牌溯源</div>
-          <div class="tab">关于我们</div>
+        <style>
+          .tab-btn { border: 0; background: transparent; font-weight: 800; color: var(--muted); padding: 8px 10px; border-radius: 10px; }
+          .tab-btn.active { color: var(--text); background: #f3f4f6; }
+          .tab-panel { margin-top: 12px; }
+          .hidden { display: none; }
+          .pre { white-space: pre-wrap; }
+        </style>
+        <div class="tabs" role="tablist" aria-label="tabs">
+          <button type="button" class="tab-btn active" data-tab="product">产品信息</button>
+          <button type="button" class="tab-btn" data-tab="brand">品牌溯源</button>
+          <button type="button" class="tab-btn" data-tab="about">关于我们</button>
+        </div>
+
+        <div id="tab-product" class="tab-panel">
+          {% if product %}
+            <div style="font-weight:800; margin-bottom:6px;">{{ product.name }}</div>
+            {% if product.detail_text %}
+              <div class="muted pre">{{ product.detail_text }}</div>
+            {% endif %}
+            {% if product.detail_images and product.detail_images|length > 0 %}
+              {% for img in product.detail_images %}
+                <div style="margin-top:10px;">
+                  <img src="{{ img.url }}" alt="产品图片" style="width:100%; border-radius:12px;" />
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endif %}
+        </div>
+
+        <div id="tab-brand" class="tab-panel hidden">
+          {% if page_content and page_content.brand_traceability and page_content.brand_traceability.text %}
+            <div class="muted pre">{{ page_content.brand_traceability.text }}</div>
+          {% else %}
+            <div class="muted">暂无内容</div>
+          {% endif %}
+        </div>
+
+        <div id="tab-about" class="tab-panel hidden">
+          {% if page_content and page_content.about_us and page_content.about_us.text %}
+            <div class="muted pre">{{ page_content.about_us.text }}</div>
+          {% else %}
+            <div class="muted">暂无内容</div>
+          {% endif %}
         </div>
       {% endif %}
     </div>
@@ -56,6 +95,21 @@
   {% if status == "genuine" %}
   <script>
     (function () {
+      function activateTab(tab) {
+        document.querySelectorAll(".tab-btn").forEach(function (b) {
+          b.classList.toggle("active", b.dataset.tab === tab);
+        });
+        ["product", "brand", "about"].forEach(function (k) {
+          var el = document.getElementById("tab-" + k);
+          if (!el) return;
+          el.classList.toggle("hidden", k !== tab);
+        });
+      }
+
+      document.querySelectorAll(".tab-btn").forEach(function (b) {
+        b.addEventListener("click", function () { activateTab(b.dataset.tab); });
+      });
+
       fetch("/api/public/verify/track", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -72,4 +126,3 @@
   </script>
   {% endif %}
 {% endblock %}
-

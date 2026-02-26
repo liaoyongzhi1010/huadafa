@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.staticfiles import StaticFiles
 
+from app.paths import UPLOADS_DIR
 from app.settings import get_settings
 from app.routes.admin_auth import router as admin_auth_router
 from app.routes.admin_pages import router as admin_pages_router
@@ -21,6 +23,8 @@ app.add_middleware(
     secret_key=settings.secret_key,
     same_site="lax",
 )
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 @app.get("/health")
 def health():

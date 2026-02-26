@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
@@ -16,9 +15,6 @@ from app.models import Base, Product
 
 @pytest.fixture()
 def admin_client_and_sessionmaker(tmp_path: Path):
-    old_cwd = Path.cwd()
-    os.chdir(tmp_path)
-
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -41,7 +37,6 @@ def admin_client_and_sessionmaker(tmp_path: Path):
         yield client, TestingSessionLocal, tmp_path
     finally:
         app.dependency_overrides.clear()
-        os.chdir(old_cwd)
 
 
 def test_admin_can_upload_product_detail_images(admin_client_and_sessionmaker):
@@ -72,6 +67,6 @@ def test_admin_can_upload_product_detail_images(admin_client_and_sessionmaker):
         assert len(product.detail_images) == 2
         assert all(img.get("url", "").startswith("/uploads/") for img in product.detail_images)
 
-    # Files are saved under uploads/
-    upload_dir = tmp_path / "uploads"
+    upload_dir = Path("uploads")
     assert upload_dir.exists()
+    assert any(upload_dir.rglob("*.png")) or any(upload_dir.rglob("*.jpg"))

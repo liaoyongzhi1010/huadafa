@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import get_db
 from app.main import app
-from app.models import AntiCode, Base, Batch, Product, VerifyConfig
+from app.models import AntiCode, Base, Batch, PageContent, Product, VerifyConfig
 
 
 @pytest.fixture()
@@ -52,9 +52,7 @@ def test_verify_page_shows_genuine_message(client_and_sessionmaker):
         db.commit()
         db.refresh(batch)
 
-        db.add(
-            AntiCode(code="1564567894562156", product_id=product.id, batch_id=batch.id, scan_count=0)
-        )
+        db.add(AntiCode(code="1564567894562156", product_id=product.id, batch_id=batch.id, scan_count=0))
         db.add(
             VerifyConfig(
                 show_code=True,
@@ -66,11 +64,23 @@ def test_verify_page_shows_genuine_message(client_and_sessionmaker):
                 text_warning="此防伪码已被多次验证，请您留意！",
             )
         )
+        product.detail_text = "产品详情文字"
+        product.detail_images = [{"url": "/uploads/products/1/x.png"}, {"url": "/uploads/products/1/y.png"}]
+        db.add_all(
+            [
+                PageContent(key="brand_traceability", content_json={"text": "品牌溯源内容"}),
+                PageContent(key="about_us", content_json={"text": "关于我们内容"}),
+            ]
+        )
         db.commit()
 
     r = client.get("/verify", params={"code": "1564567894562156"})
     assert r.status_code == 200
     assert "ICOM 官方正品防伪码" in r.text
+    assert "产品详情文字" in r.text
+    assert "/uploads/products/1/x.png" in r.text
+    assert "品牌溯源内容" in r.text
+    assert "关于我们内容" in r.text
 
 
 def test_verify_page_shows_not_found_message(client_and_sessionmaker):
@@ -79,4 +89,3 @@ def test_verify_page_shows_not_found_message(client_and_sessionmaker):
     r = client.get("/verify", params={"code": "1234567890123456"})
     assert r.status_code == 200
     assert "未查询到" in r.text
-
