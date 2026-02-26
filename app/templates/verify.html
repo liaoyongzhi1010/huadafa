@@ -1,51 +1,201 @@
 {% extends "base.html" %}
 {% block title %}防伪查询{% endblock %}
+{% block head_extra %}
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --brand: #b91c1c;
+      --ok: #16a34a;
+      --danger: #dc2626;
+    }
+
+    .container { max-width: 460px; }
+    .btn { background: var(--brand); }
+    .btn:active { transform: translateY(1px); }
+
+    .v-hero {
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 60%),
+        linear-gradient(135deg, #111827, var(--brand));
+      padding: 18px 0 14px;
+    }
+    .v-brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 0 16px;
+    }
+    .v-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 950;
+      letter-spacing: 0.2px;
+    }
+    .v-brand-name { color: #fff; font-weight: 950; letter-spacing: 0.4px; }
+    .v-brand-sub { color: rgba(255, 255, 255, 0.82); font-size: 12px; margin-top: 2px; }
+
+    .v-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(17, 24, 39, 0.12);
+      border: 1px solid rgba(17, 24, 39, 0.06);
+    }
+
+    .v-status { text-align: center; padding: 10px 0 4px; }
+    .v-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      font-weight: 950;
+      user-select: none;
+    }
+    .v-icon--ok { background: rgba(22, 163, 74, 0.10); color: var(--ok); border: 2px solid rgba(22, 163, 74, 0.22); }
+    .v-icon--bad { background: rgba(220, 38, 38, 0.10); color: var(--danger); border: 2px solid rgba(220, 38, 38, 0.22); }
+
+    .v-title { font-size: 20px; font-weight: 950; margin: 12px 0 6px; }
+    .v-kpi { margin-top: 6px; color: var(--muted); font-size: 13px; }
+    .v-code {
+      display: inline-flex;
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-weight: 850;
+      letter-spacing: 0.4px;
+    }
+    .v-flag {
+      margin-top: 10px;
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(220, 38, 38, 0.08);
+      color: var(--danger);
+      border: 1px solid rgba(220, 38, 38, 0.20);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .v-alert {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(220, 38, 38, 0.06);
+      border: 1px solid rgba(220, 38, 38, 0.18);
+      color: var(--danger);
+      font-weight: 950;
+    }
+
+    .v-section-title { font-size: 13px; font-weight: 950; margin: 0 0 10px; }
+    .v-list { display: grid; gap: 6px; }
+    .v-row { color: var(--muted); font-size: 13px; }
+
+    .v-reco {
+      display: block;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      text-decoration: none;
+    }
+    .v-reco img { width: 100%; height: auto; display: block; }
+
+    .tabs { display: flex; gap: 8px; justify-content: flex-start; margin-top: 12px; }
+    .tab-btn {
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      font-weight: 900;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .tab-btn.active { color: #fff; background: var(--brand); border-color: var(--brand); }
+    .tab-panel { margin-top: 12px; }
+    .hidden { display: none; }
+    .pre { white-space: pre-wrap; }
+  </style>
+{% endblock %}
 {% block body %}
+  <div class="v-hero">
+    <div class="container" style="padding:0;">
+      <div class="v-brand">
+        <div class="v-mark">1918</div>
+        <div>
+          <div class="v-brand-name">IMCO 防伪中心</div>
+          <div class="v-brand-sub">AUTHENTICITY VERIFICATION</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
-    <div class="card">
-      <div class="center">
+    <div class="v-card">
+      <div class="v-status">
         {% if status == "genuine" %}
-          <div class="big">{% if show_code %}{{ code }}{% else %}✓{% endif %}</div>
+          <div class="v-icon v-icon--ok">✓</div>
+        {% else %}
+          <div class="v-icon v-icon--bad">!</div>
         {% endif %}
-        <div class="title">{{ message }}</div>
+
+        <div class="v-title">{{ message }}</div>
+
         {% if status == "genuine" %}
-          <div class="muted">此防伪码已验证 <span id="scanCount">{{ scan_count }}</span> 次</div>
-          {% if scan_count > 1 %}
-            <div class="muted">已被查询过</div>
+          <div class="v-kpi">此防伪码已验证 <span id="scanCount">{{ scan_count }}</span> 次</div>
+          {% if show_code %}
+            <div class="v-code">{{ code }}</div>
           {% endif %}
-          {% if warning_active %}
-            <div class="danger" style="margin-top:10px;">{{ text_warning }}</div>
+          {% if scan_count > 1 %}
+            <div class="v-flag">已被查询过</div>
           {% endif %}
         {% endif %}
       </div>
 
       {% if status == "genuine" %}
-        <div class="hr"></div>
+        {% if warning_active %}
+          <div class="v-alert">{{ text_warning }}</div>
+        {% endif %}
+
         {% if recent_events and recent_events|length > 0 %}
-          <div class="muted" style="font-weight:700;">最近验证时间</div>
-          <div class="muted">
+          <div class="hr"></div>
+          <div class="v-section-title">最近验证时间</div>
+          <div class="v-list">
             {% for t in recent_events %}
-              <div>{{ t }}</div>
+              <div class="v-row">{{ t }}</div>
             {% endfor %}
           </div>
         {% endif %}
 
+        <div class="hr"></div>
+        <div class="v-section-title">官方推荐</div>
         {% if recommendations and recommendations|length > 0 %}
-          <div class="hr"></div>
           {% set r0 = recommendations[0] %}
-          <a href="{{ r0.target_url }}" style="display:block; text-decoration:none;">
-            <img src="{{ r0.image_url }}" alt="推荐" style="width:100%; border-radius:12px;" />
+          <a class="v-reco" href="{{ r0.target_url }}" aria-label="recommendation link">
+            <img src="{{ r0.image_url }}" alt="推荐" />
           </a>
+        {% else %}
+          <div class="v-reco" aria-label="recommendation placeholder">
+            <img src="/static/placeholders/recommendation.svg" alt="推荐占位图" />
+          </div>
         {% endif %}
 
         <div class="hr"></div>
-        <style>
-          .tab-btn { border: 0; background: transparent; font-weight: 800; color: var(--muted); padding: 8px 10px; border-radius: 10px; }
-          .tab-btn.active { color: var(--text); background: #f3f4f6; }
-          .tab-panel { margin-top: 12px; }
-          .hidden { display: none; }
-          .pre { white-space: pre-wrap; }
-        </style>
         <div class="tabs" role="tablist" aria-label="tabs">
           <button type="button" class="tab-btn active" data-tab="product">产品信息</button>
           <button type="button" class="tab-btn" data-tab="brand">品牌溯源</button>
@@ -54,14 +204,14 @@
 
         <div id="tab-product" class="tab-panel">
           {% if product %}
-            <div style="font-weight:800; margin-bottom:6px;">{{ product.name }}</div>
+            <div style="font-weight:950; margin-bottom:6px;">{{ product.name }}</div>
             {% if product.detail_text %}
               <div class="muted pre">{{ product.detail_text }}</div>
             {% endif %}
             {% if product.detail_images and product.detail_images|length > 0 %}
               {% for img in product.detail_images %}
                 <div style="margin-top:10px;">
-                  <img src="{{ img.url }}" alt="产品图片" style="width:100%; border-radius:12px;" />
+                  <img src="{{ img.url }}" alt="产品图片" style="width:100%; border-radius:14px; border:1px solid #e5e7eb;" />
                 </div>
               {% endfor %}
             {% endif %}

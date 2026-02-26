@@ -79,6 +79,7 @@ def test_verify_page_shows_genuine_message(client_and_sessionmaker):
     assert "ICOM 官方正品防伪码" in r.text
     assert "产品详情文字" in r.text
     assert "/uploads/products/1/x.png" in r.text
+    assert "/static/placeholders/recommendation.svg" in r.text
     assert "品牌溯源内容" in r.text
     assert "关于我们内容" in r.text
 

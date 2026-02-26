@@ -19,9 +19,9 @@
       .tabs { display: flex; gap: 12px; justify-content: center; font-weight: 700; margin-top: 10px; }
       .tab { color: var(--muted); }
     </style>
+    {% block head_extra %}{% endblock %}
   </head>
   <body>
     {% block body %}{% endblock %}
   </body>
 </html>
-
