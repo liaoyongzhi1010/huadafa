@@ -1,22 +1,26 @@
-{% extends "base.html" %}
-{% block title %}后台{% endblock %}
+{% extends "admin/base.html" %}
+{% block title %}仪表盘{% endblock %}
+{% block topbar_title %}仪表盘{% endblock %}
 {% block body %}
   <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">快速开始</h1>
+        <div class="muted page-subtitle">跟着 4 步把一批防伪码发布出去</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" href="/admin/products/new">新增产品</a>
+        <a class="btn" href="/admin/help">使用文档</a>
+      </div>
+    </div>
+
     <div class="card">
-      <div class="title center">后台</div>
-      <div class="muted center">已登录</div>
-      <div style="height:12px;"></div>
-      <a class="btn" href="/admin/products">产品管理</a>
-      <div style="height:10px;"></div>
-      <a class="btn" href="/admin/config">验证页配置</a>
-      <div style="height:10px;"></div>
-      <a class="btn" href="/admin/content">固定内容</a>
-      <div style="height:10px;"></div>
-      <a class="btn" href="/admin/recommendations">商品推荐</a>
-      <div class="hr"></div>
-      <form method="post" action="/admin/logout">
-        <button class="btn" type="submit">退出登录</button>
-      </form>
+      <div style="display:grid; gap:10px;">
+        <div><span style="font-weight:900;">1.</span> 在「产品 / 批次」中先创建产品并补充详情（文字 + 图片）。</div>
+        <div><span style="font-weight:900;">2.</span> 进入产品后创建批次（生产日期默认今天）。</div>
+        <div><span style="font-weight:900;">3.</span> 进入批次详情生成防伪码（单次 ≤ 10000）。</div>
+        <div><span style="font-weight:900;">4.</span> 导出 CSV / 二维码 ZIP，交给印刷/贴标；用户扫码将访问 `https://1918imco.com/verify?code=...`。</div>
+      </div>
     </div>
   </div>
 {% endblock %}

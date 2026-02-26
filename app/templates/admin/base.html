@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}后台{% endblock %} · 防伪系统</title>
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --panel: #ffffff;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
+
+        --primary: #2563eb;
+        --primary-600: #1d4ed8;
+        --primary-050: #eff6ff;
+        --primary-100: #dbeafe;
+
+        --danger: #dc2626;
+        --danger-050: #fef2f2;
+        --danger-100: #fee2e2;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC",
+          "Microsoft YaHei", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      a { color: inherit; }
+
+      .container { max-width: 1100px; margin: 0 auto; }
+      .muted { color: var(--muted); }
+      .danger { color: var(--danger); }
+
+      .admin-shell {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        min-height: 100vh;
+      }
+      body.logged-out .admin-shell { grid-template-columns: 1fr; }
+      body.logged-out .sidebar { display: none; }
+
+      .sidebar {
+        padding: 18px 14px;
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 10px;
+        border-radius: 12px;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+      }
+      .brand-badge {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--primary-050);
+        border: 1px solid var(--primary-100);
+        color: var(--primary);
+        font-weight: 900;
+      }
+      .nav {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .nav a {
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .nav a:hover {
+        background: #f8fafc;
+        border-color: var(--border);
+      }
+      .nav a.active {
+        background: var(--primary-050);
+        border-color: var(--primary-100);
+        color: var(--primary-600);
+        font-weight: 800;
+      }
+
+      .main { display: flex; flex-direction: column; min-width: 0; }
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(10px);
+        background: rgba(246, 247, 251, 0.75);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .topbar-title {
+        font-weight: 900;
+        letter-spacing: 0.2px;
+      }
+      .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+      .content { padding: 22px 18px; }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .page-title { font-size: 20px; font-weight: 900; margin: 0; }
+      .page-subtitle { margin-top: 6px; font-size: 13px; }
+      .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+      .btn {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-weight: 800;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+      .btn:hover { background: #f8fafc; }
+      .btn-primary {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+      }
+      .btn-primary:hover { background: var(--primary-600); border-color: var(--primary-600); }
+      .btn-ghost { background: transparent; border-color: transparent; }
+      .btn-ghost:hover { background: #f1f5f9; border-color: #f1f5f9; }
+
+      .form { display: grid; gap: 12px; }
+      .form-row { display: grid; gap: 8px; }
+      .label { font-size: 13px; color: var(--muted); font-weight: 700; }
+      .input, .textarea, .file {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font: inherit;
+        background: #fff;
+      }
+      .textarea { min-height: 120px; resize: vertical; }
+      .input:focus, .textarea:focus, .file:focus {
+        outline: 0;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+      }
+
+      .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 14px; }
+      .table { width: 100%; border-collapse: collapse; background: #fff; }
+      .table th, .table td { text-align: left; padding: 12px 12px; border-bottom: 1px solid var(--border); }
+      .table th { font-size: 12px; color: var(--muted); font-weight: 900; background: #f8fafc; }
+      .table tr:last-child td { border-bottom: 0; }
+
+      .alert {
+        border-radius: 14px;
+        padding: 12px 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+        font-weight: 700;
+      }
+      .alert-danger { border-color: var(--danger-100); background: var(--danger-050); color: var(--danger); }
+
+      .auth-wrap {
+        min-height: calc(100vh - 44px);
+        display: grid;
+        place-items: center;
+        padding: 18px 0 36px;
+      }
+      .auth-card { max-width: 420px; width: 100%; }
+
+      @media (max-width: 960px) {
+        .admin-shell { grid-template-columns: 1fr; }
+        .sidebar { position: sticky; top: 0; z-index: 11; border-right: 0; border-bottom: 1px solid var(--border); }
+        .nav { flex-direction: row; flex-wrap: wrap; }
+        .nav a { flex: 1 1 auto; justify-content: center; }
+      }
+    </style>
+  </head>
+  {% set is_logged_in = request.session.get("admin_logged_in") %}
+  <body class="{% if is_logged_in %}logged-in{% else %}logged-out{% endif %}">
+    <div class="admin-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-badge">✔</span>
+          <span>防伪后台</span>
+        </div>
+
+        {% if is_logged_in %}
+          {% set path = request.url.path %}
+          <nav class="nav" aria-label="admin nav">
+            <a href="/admin" class="{% if path == '/admin' or path == '/admin/' %}active{% endif %}">仪表盘</a>
+            <a href="/admin/products" class="{% if path.startswith('/admin/products') or path.startswith('/admin/batches') %}active{% endif %}">产品 / 批次</a>
+            <a href="/admin/config" class="{% if path.startswith('/admin/config') %}active{% endif %}">验证页配置</a>
+            <a href="/admin/content" class="{% if path.startswith('/admin/content') %}active{% endif %}">固定内容</a>
+            <a href="/admin/recommendations" class="{% if path.startswith('/admin/recommendations') %}active{% endif %}">商品推荐</a>
+            <a href="/admin/help" class="{% if path.startswith('/admin/help') %}active{% endif %}">使用文档</a>
+          </nav>
+        {% endif %}
+      </aside>
+
+      <div class="main">
+        <header class="topbar">
+          <div class="topbar-title">{% block topbar_title %}管理后台{% endblock %}</div>
+          {% if is_logged_in %}
+            <div class="topbar-actions">
+              <a class="btn btn-ghost" href="/admin/help">使用文档</a>
+              <form method="post" action="/admin/logout" style="margin:0;">
+                <button class="btn btn-ghost" type="submit">退出</button>
+              </form>
+            </div>
+          {% endif %}
+        </header>
+
+        <main class="content">
+          {% block body %}{% endblock %}
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
+
