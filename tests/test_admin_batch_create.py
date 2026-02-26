@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import get_db
 from app.main import app
-from app.models import Base, Batch, Product
+from app.models import AntiCode, Base, Batch, Product
 
 
 @pytest.fixture()
@@ -51,10 +51,16 @@ def test_admin_can_create_batch_for_product(admin_client_and_sessionmaker):
 
     r = client.post(
         f"/admin/products/{product_id}/batches/new",
-        data={"production_date": date(2026, 2, 12).isoformat(), "note": "第一批"},
+        data={"production_date": date(2026, 2, 12).isoformat(), "note": "第一批", "quantity": "3"},
         follow_redirects=False,
     )
     assert r.status_code in (302, 303)
+
+    with SessionLocal() as db:
+        batch = db.query(Batch).filter(Batch.product_id == product_id).order_by(Batch.id.desc()).first()
+        assert batch is not None
+        codes = db.query(AntiCode).filter(AntiCode.batch_id == batch.id).all()
+        assert len(codes) == 3
 
     r2 = client.get(f"/admin/products/{product_id}/batches")
     assert r2.status_code == 200

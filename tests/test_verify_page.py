@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import re
 from datetime import date
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,7 +13,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import get_db
 from app.main import app
-from app.models import AntiCode, Base, Batch, PageContent, Product, VerifyConfig
+from app.models import AntiCode, Base, Batch, PageContent, Product, ScanEvent, VerifyConfig
 
 
 @pytest.fixture()
@@ -90,3 +93,56 @@ def test_verify_page_shows_not_found_message(client_and_sessionmaker):
     r = client.get("/verify", params={"code": "1234567890123456"})
     assert r.status_code == 200
     assert "未查询到" in r.text
+
+
+def test_verify_page_first_scan_shows_recent_time(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="P", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+        batch = Batch(product_id=product.id, production_date=date(2026, 2, 12), note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        db.add(AntiCode(code="1564567894562156", product_id=product.id, batch_id=batch.id, scan_count=0))
+        db.commit()
+
+    r = client.get("/verify", params={"code": "1564567894562156"})
+    assert r.status_code == 200
+    assert "最近验证时间" in r.text
+    assert re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", r.text)
+
+
+def test_verify_page_formats_recent_events_in_beijing_time(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    now_utc = datetime.now(timezone.utc).replace(microsecond=0)
+    expected = now_utc.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M:%S")
+
+    with SessionLocal() as db:
+        product = Product(name="P", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+        batch = Batch(product_id=product.id, production_date=date(2026, 2, 12), note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        anti = AntiCode(code="9999888877776666", product_id=product.id, batch_id=batch.id, scan_count=0)
+        db.add(anti)
+        db.commit()
+        db.refresh(anti)
+
+        db.add(ScanEvent(anti_code_id=anti.id, scanned_at=now_utc, visitor_id="v1", ip_hash="", ua_hash=""))
+        db.commit()
+
+    r = client.get("/verify", params={"code": "9999888877776666"}, cookies={"visitor_id": "v1"})
+    assert r.status_code == 200
+    assert expected in r.text

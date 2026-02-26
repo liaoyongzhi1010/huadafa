@@ -24,7 +24,6 @@
                 <th style="min-width:200px;">备注</th>
                 <th style="min-width:140px;">数量</th>
                 <th style="min-width:360px;">导出</th>
-                <th style="min-width:260px;">生成防伪码</th>
                 <th style="min-width:140px;">操作</th>
               </tr>
             </thead>
@@ -45,16 +44,6 @@
                       <a class="btn" href="/admin/batches/{{ b.id }}/export/csv">CSV</a>
                       <a class="btn" href="/admin/batches/{{ b.id }}/export/qrcodes.zip">二维码 ZIP</a>
                     </div>
-                  </td>
-                  <td>
-                    {% if row.code_count == 0 %}
-                      <form method="post" action="/admin/batches/{{ b.id }}/codes/generate" style="display:flex; gap:10px; align-items:center; margin:0;">
-                        <input class="input" name="quantity" value="100" style="max-width:120px;" />
-                        <button class="btn btn-primary" type="submit">生成</button>
-                      </form>
-                    {% else %}
-                      <div class="muted" style="font-weight:800;">已生成</div>
-                    {% endif %}
                   </td>
                   <td>
                     <a class="btn btn-danger" href="/admin/batches/{{ b.id }}/delete">删除</a>

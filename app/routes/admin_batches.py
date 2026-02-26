@@ -151,7 +151,7 @@ def product_batch_new_page(request: Request, product_id: int, db: Session = Depe
     return templates.TemplateResponse(
         request,
         "admin/batch_new.html",
-        {"product": product, "today": date.today().isoformat()},
+        {"product": product, "today": date.today().isoformat(), "quantity": "100", "error": ""},
     )
 
 
@@ -160,6 +160,7 @@ def product_batch_new_submit(
     request: Request,
     product_id: int,
     production_date: str = Form(""),
+    quantity: str = Form(""),
     note: str = Form(""),
     db: Session = Depends(get_db),
 ):
@@ -176,10 +177,48 @@ def product_batch_new_submit(
     except ValueError:
         parsed_date = date.today()
 
+    try:
+        n = int(quantity)
+    except ValueError:
+        n = 0
+    n = max(0, min(n, 10000))
+    if n <= 0:
+        return templates.TemplateResponse(
+            request,
+            "admin/batch_new.html",
+            {
+                "product": product,
+                "today": parsed_date.isoformat(),
+                "quantity": quantity,
+                "error": "数量必须为 1–10000。",
+            },
+            status_code=200,
+        )
+
     batch = Batch(product_id=product_id, production_date=parsed_date, note=note)
     db.add(batch)
     db.commit()
     db.refresh(batch)
+
+    codes: set[str] = set()
+    while len(codes) < n:
+        codes.add(_generate_code())
+
+    objects = [AntiCode(code=c, product_id=product_id, batch_id=batch.id) for c in codes]
+    db.add_all(objects)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        inserted = 0
+        while inserted < n:
+            candidate = _generate_code()
+            db.add(AntiCode(code=candidate, product_id=product_id, batch_id=batch.id))
+            try:
+                db.commit()
+                inserted += 1
+            except IntegrityError:
+                db.rollback()
 
     return RedirectResponse(
         url=f"/admin/products/{product_id}/batches",

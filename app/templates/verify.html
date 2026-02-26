@@ -259,19 +259,6 @@
       document.querySelectorAll(".tab-btn").forEach(function (b) {
         b.addEventListener("click", function () { activateTab(b.dataset.tab); });
       });
-
-      fetch("/api/public/verify/track", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({code: "{{ code }}"}),
-      }).then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (data && typeof data.scan_count === "number") {
-            var el = document.getElementById("scanCount");
-            if (el) el.textContent = String(data.scan_count);
-          }
-        })
-        .catch(function () {});
     })();
   </script>
   {% endif %}

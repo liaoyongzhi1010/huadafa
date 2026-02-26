@@ -39,7 +39,7 @@ def admin_client_and_sessionmaker():
         app.dependency_overrides.clear()
 
 
-def test_batches_list_hides_generate_form_when_codes_exist(admin_client_and_sessionmaker):
+def test_batches_list_has_no_generate_column(admin_client_and_sessionmaker):
     client, SessionLocal = admin_client_and_sessionmaker
 
     with SessionLocal() as db:
@@ -49,20 +49,18 @@ def test_batches_list_hides_generate_form_when_codes_exist(admin_client_and_sess
         db.refresh(product)
         product_id = product.id
 
-        batch_empty = Batch(product_id=product.id, production_date=date(2026, 2, 12), note="")
-        batch_generated = Batch(product_id=product.id, production_date=date(2026, 2, 13), note="")
-        db.add_all([batch_empty, batch_generated])
+        batch = Batch(product_id=product.id, production_date=date(2026, 2, 12), note="")
+        db.add(batch)
         db.commit()
-        db.refresh(batch_empty)
-        db.refresh(batch_generated)
+        db.refresh(batch)
 
-        db.add(AntiCode(code="1234567890123456", product_id=product.id, batch_id=batch_generated.id, scan_count=0))
+        db.add(AntiCode(code="1234567890123456", product_id=product.id, batch_id=batch.id, scan_count=0))
         db.commit()
 
-        empty_id = batch_empty.id
-        generated_id = batch_generated.id
+        batch_id = batch.id
 
     r = client.get(f"/admin/products/{product_id}/batches")
     assert r.status_code == 200
-    assert f'/admin/batches/{empty_id}/codes/generate' in r.text
-    assert f'/admin/batches/{generated_id}/codes/generate' not in r.text
+    assert "生成防伪码" not in r.text
+    assert "/codes/generate" not in r.text
+    assert f"/admin/batches/{batch_id}/export/csv" in r.text
