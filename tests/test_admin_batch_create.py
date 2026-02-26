@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import get_db
 from app.main import app
-from app.models import Base, Product
+from app.models import Base, Batch, Product
 
 
 @pytest.fixture()
@@ -60,3 +60,24 @@ def test_admin_can_create_batch_for_product(admin_client_and_sessionmaker):
     assert r2.status_code == 200
     assert "2026-02-12" in r2.text
 
+
+def test_admin_batch_detail_redirects_to_product_batches(admin_client_and_sessionmaker):
+    client, SessionLocal = admin_client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="P", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+        batch = Batch(product_id=product.id, production_date=date(2026, 2, 12), note="第一批")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        product_id = product.id
+        batch_id = batch.id
+
+    r = client.get(f"/admin/batches/{batch_id}", follow_redirects=False)
+    assert r.status_code in (302, 303)
+    assert r.headers["location"].endswith(f"/admin/products/{product_id}/batches")

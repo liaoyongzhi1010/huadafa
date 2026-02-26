@@ -6,7 +6,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">批次</h1>
-        <div class="muted page-subtitle">产品：{{ product.name }}（ID {{ product.id }}）</div>
+        <div class="muted page-subtitle">产品：{{ product.name }}</div>
       </div>
       <div class="actions">
         <a class="btn btn-primary" href="/admin/products/{{ product.id }}/batches/new">新增批次</a>
@@ -15,26 +15,41 @@
     </div>
 
     <div class="card">
-      {% if batches and batches|length > 0 %}
+      {% if batch_rows and batch_rows|length > 0 %}
         <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
-                <th style="min-width:260px;">批次</th>
-                <th>备注</th>
-                <th>操作</th>
+                <th style="min-width:160px;">生产日期</th>
+                <th style="min-width:200px;">备注</th>
+                <th style="min-width:140px;">数量</th>
+                <th style="min-width:360px;">导出</th>
+                <th style="min-width:260px;">生成防伪码</th>
               </tr>
             </thead>
             <tbody>
-              {% for b in batches %}
+              {% for row in batch_rows %}
+                {% set b = row.batch %}
                 <tr>
                   <td>
-                    <div style="font-weight:900;">批次 {{ b.id }}</div>
-                    <div class="muted" style="font-size:13px;">生产日期：{{ b.production_date }}</div>
+                    <div style="font-weight:900;">{{ b.production_date }}</div>
                   </td>
                   <td class="muted">{{ b.note }}</td>
                   <td>
-                    <a class="btn" href="/admin/batches/{{ b.id }}">进入</a>
+                    <div style="font-weight:900;">{{ row.code_count }}</div>
+                    <div class="muted" style="font-size:12px;">防伪码</div>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <a class="btn" href="/admin/batches/{{ b.id }}/export/csv">CSV</a>
+                      <a class="btn" href="/admin/batches/{{ b.id }}/export/qrcodes.zip">二维码 ZIP</a>
+                    </div>
+                  </td>
+                  <td>
+                    <form method="post" action="/admin/batches/{{ b.id }}/codes/generate" style="display:flex; gap:10px; align-items:center; margin:0;">
+                      <input class="input" name="quantity" value="100" style="max-width:120px;" />
+                      <button class="btn btn-primary" type="submit">生成</button>
+                    </form>
                   </td>
                 </tr>
               {% endfor %}

@@ -42,7 +42,7 @@ def generate_codes_for_batch(
 
     batch = db.execute(select(Batch).where(Batch.id == batch_id)).scalar_one_or_none()
     if batch is None:
-        return RedirectResponse(url="/admin", status_code=HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
 
     try:
         n = int(quantity)
@@ -51,7 +51,10 @@ def generate_codes_for_batch(
 
     n = max(0, min(n, 10000))
     if n == 0:
-        return RedirectResponse(url=f"/admin/batches/{batch_id}", status_code=HTTP_303_SEE_OTHER)
+        return RedirectResponse(
+            url=f"/admin/products/{batch.product_id}/batches",
+            status_code=HTTP_303_SEE_OTHER,
+        )
 
     codes: set[str] = set()
     while len(codes) < n:
@@ -74,7 +77,10 @@ def generate_codes_for_batch(
             except IntegrityError:
                 db.rollback()
 
-    return RedirectResponse(url=f"/admin/batches/{batch_id}", status_code=HTTP_303_SEE_OTHER)
+    return RedirectResponse(
+        url=f"/admin/products/{batch.product_id}/batches",
+        status_code=HTTP_303_SEE_OTHER,
+    )
 
 
 @router.get("/batches/{batch_id}")
@@ -85,15 +91,11 @@ def batch_detail(request: Request, batch_id: int, db: Session = Depends(get_db))
 
     batch = db.execute(select(Batch).where(Batch.id == batch_id)).scalar_one_or_none()
     if batch is None:
-        return RedirectResponse(url="/admin", status_code=HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
 
-    code_count = db.execute(
-        select(func.count()).select_from(AntiCode).where(AntiCode.batch_id == batch_id)
-    ).scalar_one()
-    return templates.TemplateResponse(
-        request,
-        "admin/batch_detail.html",
-        {"batch": batch, "code_count": int(code_count)},
+    return RedirectResponse(
+        url=f"/admin/products/{batch.product_id}/batches",
+        status_code=HTTP_303_SEE_OTHER,
     )
 
 
@@ -107,17 +109,27 @@ def product_batches_list(request: Request, product_id: int, db: Session = Depend
     if product is None:
         return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
 
-    batches = (
-        db.execute(
-            select(Batch).where(Batch.product_id == product_id).order_by(desc(Batch.id))
+    count_subq = (
+        select(
+            AntiCode.batch_id.label("batch_id"),
+            func.count(AntiCode.id).label("code_count"),
         )
-        .scalars()
-        .all()
+        .group_by(AntiCode.batch_id)
+        .subquery()
     )
+
+    rows = db.execute(
+        select(Batch, func.coalesce(count_subq.c.code_count, 0))
+        .outerjoin(count_subq, count_subq.c.batch_id == Batch.id)
+        .where(Batch.product_id == product_id)
+        .order_by(desc(Batch.id))
+    ).all()
+
+    batch_rows = [{"batch": b, "code_count": int(count)} for b, count in rows]
     return templates.TemplateResponse(
         request,
         "admin/batches_list.html",
-        {"product": product, "batches": batches},
+        {"product": product, "batch_rows": batch_rows},
     )
 
 
@@ -164,4 +176,7 @@ def product_batch_new_submit(
     db.commit()
     db.refresh(batch)
 
-    return RedirectResponse(url=f"/admin/batches/{batch.id}", status_code=HTTP_303_SEE_OTHER)
+    return RedirectResponse(
+        url=f"/admin/products/{product_id}/batches",
+        status_code=HTTP_303_SEE_OTHER,
+    )
