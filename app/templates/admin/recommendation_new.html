@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}新增推荐{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="title center">新增推荐</div>
+      {% if error %}
+        <div class="danger center" style="margin-bottom: 10px;">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="/admin/recommendations/new">
+        <div style="margin-bottom:10px;">
+          <div class="muted">推荐图片 URL</div>
+          <input name="image_url" value="{{ image_url or '' }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="muted">跳转链接</div>
+          <input name="target_url" value="{{ target_url or '' }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="muted">绑定产品ID（可选）</div>
+          <input name="product_id" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="muted">排序（大到小）</div>
+          <input name="sort_order" value="0" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin: 10px 0 14px;">
+          <label>
+            <input type="checkbox" name="enabled" checked />
+            启用
+          </label>
+        </div>
+        <button class="btn" type="submit">保存</button>
+      </form>
+      <div style="height:10px;"></div>
+      <a class="muted" href="/admin/recommendations">返回列表</a>
+    </div>
+  </div>
+{% endblock %}
+

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}验证页配置{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="title center">验证页配置</div>
+      <form method="post" action="/admin/config">
+        <div style="margin: 10px 0 14px;">
+          <label>
+            <input type="checkbox" name="show_code" {% if cfg.show_code %}checked{% endif %} />
+            显示防伪码
+          </label>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <div class="muted">警示阈值（次数）</div>
+          <input name="warning_threshold" value="{{ cfg.warning_threshold }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="muted">展示最近验证条数</div>
+          <input name="recent_events_limit" value="{{ cfg.recent_events_limit }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="muted">联系我们跳转 URL</div>
+          <input name="contact_us_url" value="{{ cfg.contact_us_url }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="muted">正品提示文案</div>
+          <input name="text_genuine" value="{{ cfg.text_genuine }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="muted">未查到文案</div>
+          <input name="text_not_found" value="{{ cfg.text_not_found }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:14px;">
+          <div class="muted">警示文案</div>
+          <input name="text_warning" value="{{ cfg.text_warning }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <button class="btn" type="submit">保存</button>
+      </form>
+      <div style="height:10px;"></div>
+      <a class="muted" href="/admin">返回后台</a>
+    </div>
+  </div>
+{% endblock %}
+

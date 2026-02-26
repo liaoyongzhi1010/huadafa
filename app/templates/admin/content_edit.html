@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}固定内容{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="title center">固定内容</div>
+      <form method="post" action="/admin/content">
+        <div style="margin-bottom:14px;">
+          <div class="muted">品牌溯源</div>
+          <textarea name="brand_text" rows="6" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;">{{ brand_text }}</textarea>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div class="muted">关于我们</div>
+          <textarea name="about_text" rows="6" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;">{{ about_text }}</textarea>
+        </div>
+        <button class="btn" type="submit">保存</button>
+      </form>
+      <div style="height:10px;"></div>
+      <a class="muted" href="/admin">返回后台</a>
+    </div>
+  </div>
+{% endblock %}
+

@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, Form, Request
+from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import desc, select
+from sqlalchemy.orm import Session
+from starlette.status import HTTP_303_SEE_OTHER
+
+from app.db import get_db
+from app.models import VerifyConfig
+
+router = APIRouter(prefix="/admin", tags=["admin"])
+
+templates = Jinja2Templates(directory="app/templates")
+
+
+def _require_admin(request: Request):
+    if not request.session.get("admin_logged_in"):
+        return RedirectResponse(url="/admin/login", status_code=HTTP_303_SEE_OTHER)
+    return None
+
+
+def _get_or_create_config(db: Session) -> VerifyConfig:
+    cfg = db.execute(select(VerifyConfig).order_by(desc(VerifyConfig.id))).scalar_one_or_none()
+    if cfg is not None:
+        return cfg
+    cfg = VerifyConfig()
+    db.add(cfg)
+    db.commit()
+    db.refresh(cfg)
+    return cfg
+
+
+@router.get("/config")
+def config_page(request: Request, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    cfg = _get_or_create_config(db)
+    return templates.TemplateResponse(request, "admin/config_edit.html", {"cfg": cfg})
+
+
+@router.post("/config")
+def config_submit(
+    request: Request,
+    show_code: str | None = Form(None),
+    warning_threshold: str = Form("5"),
+    recent_events_limit: str = Form("5"),
+    contact_us_url: str = Form(""),
+    text_genuine: str = Form("官方正品防伪码"),
+    text_not_found: str = Form("未查询到该防伪码"),
+    text_warning: str = Form("此防伪码已被多次验证，请您留意！"),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    cfg = _get_or_create_config(db)
+
+    cfg.show_code = show_code is not None
+    try:
+        cfg.warning_threshold = max(1, int(warning_threshold))
+    except ValueError:
+        cfg.warning_threshold = 5
+    try:
+        cfg.recent_events_limit = max(1, int(recent_events_limit))
+    except ValueError:
+        cfg.recent_events_limit = 5
+
+    cfg.contact_us_url = contact_us_url.strip()
+    cfg.text_genuine = text_genuine.strip() or cfg.text_genuine
+    cfg.text_not_found = text_not_found.strip() or cfg.text_not_found
+    cfg.text_warning = text_warning.strip() or cfg.text_warning
+
+    db.add(cfg)
+    db.commit()
+
+    return RedirectResponse(url="/admin/config", status_code=HTTP_303_SEE_OTHER)
+
