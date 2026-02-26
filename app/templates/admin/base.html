@@ -196,6 +196,12 @@
       }
       .alert-danger { border-color: var(--danger-100); background: var(--danger-050); color: var(--danger); }
 
+      .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+      .stat-card { border: 1px solid var(--border); background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); }
+      .stat-label { font-size: 12px; color: var(--muted); font-weight: 900; letter-spacing: 0.2px; }
+      .stat-value { margin-top: 6px; font-size: 24px; font-weight: 950; }
+      .stat-hint { margin-top: 4px; font-size: 12px; color: var(--muted); }
+
       .auth-wrap {
         min-height: calc(100vh - 44px);
         display: grid;
@@ -209,6 +215,10 @@
         .sidebar { position: sticky; top: 0; z-index: 11; border-right: 0; border-bottom: 1px solid var(--border); }
         .nav { flex-direction: row; flex-wrap: wrap; }
         .nav a { flex: 1 1 auto; justify-content: center; }
+      }
+
+      @media (max-width: 720px) {
+        .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
     </style>
   </head>
@@ -254,4 +264,3 @@
     </div>
   </body>
 </html>
-

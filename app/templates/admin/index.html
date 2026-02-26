@@ -14,13 +14,66 @@
       </div>
     </div>
 
+    <div class="stats-grid" style="margin-bottom:14px;">
+      <div class="stat-card">
+        <div class="stat-label">今日扫码</div>
+        <div class="stat-value">{{ stats.today_scans }}</div>
+        <div class="stat-hint">从今天 00:00 开始统计</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">近7天扫码</div>
+        <div class="stat-value">{{ stats.last7_scans }}</div>
+        <div class="stat-hint">滚动 7 天</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">防伪码总数</div>
+        <div class="stat-value">{{ stats.total_codes }}</div>
+        <div class="stat-hint">已生成的全部防伪码</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">批次数</div>
+        <div class="stat-value">{{ stats.total_batches }}</div>
+        <div class="stat-hint">全部批次</div>
+      </div>
+    </div>
+
     <div class="card">
       <div style="display:grid; gap:10px;">
         <div><span style="font-weight:900;">1.</span> 在「产品 / 批次」中先创建产品并补充详情（文字 + 图片）。</div>
         <div><span style="font-weight:900;">2.</span> 进入产品后创建批次（生产日期默认今天）。</div>
-        <div><span style="font-weight:900;">3.</span> 进入批次详情生成防伪码（单次 ≤ 10000）。</div>
+        <div><span style="font-weight:900;">3.</span> 在批次列表直接生成防伪码（单次 ≤ 10000）。</div>
         <div><span style="font-weight:900;">4.</span> 导出 CSV / 二维码 ZIP，交给印刷/贴标；用户扫码将访问 `https://1918imco.com/verify?code=...`。</div>
       </div>
     </div>
+
+    {% if top_codes and top_codes|length > 0 %}
+      <div style="height:14px;"></div>
+      <div class="card">
+        <div class="page-header" style="margin-bottom:10px;">
+          <div>
+            <div style="font-weight:900; font-size:16px;">高频验证 Top</div>
+            <div class="muted" style="font-size:12px;">按累计验证次数排序</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="min-width:220px;">防伪码</th>
+                <th>验证次数</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in top_codes %}
+                <tr>
+                  <td style="font-weight:900;">{{ row.code }}</td>
+                  <td class="muted">{{ row.scan_count }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}
