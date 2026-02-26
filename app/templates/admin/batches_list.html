@@ -25,6 +25,7 @@
                 <th style="min-width:140px;">数量</th>
                 <th style="min-width:360px;">导出</th>
                 <th style="min-width:260px;">生成防伪码</th>
+                <th style="min-width:140px;">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -54,6 +55,9 @@
                     {% else %}
                       <div class="muted" style="font-weight:800;">已生成</div>
                     {% endif %}
+                  </td>
+                  <td>
+                    <a class="btn btn-danger" href="/admin/batches/{{ b.id }}/delete">删除</a>
                   </td>
                 </tr>
               {% endfor %}

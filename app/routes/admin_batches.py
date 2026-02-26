@@ -29,6 +29,11 @@ def _generate_code() -> str:
     return first + rest
 
 
+def _is_delete_confirmed(confirm_text: str) -> bool:
+    t = (confirm_text or "").strip()
+    return t == "删除" or t.upper() == "DELETE"
+
+
 @router.post("/batches/{batch_id}/codes/generate")
 def generate_codes_for_batch(
     request: Request,
@@ -175,6 +180,72 @@ def product_batch_new_submit(
     db.add(batch)
     db.commit()
     db.refresh(batch)
+
+    return RedirectResponse(
+        url=f"/admin/products/{product_id}/batches",
+        status_code=HTTP_303_SEE_OTHER,
+    )
+
+
+@router.get("/batches/{batch_id}/delete")
+def batch_delete_confirm_page(request: Request, batch_id: int, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    batch = db.execute(select(Batch).where(Batch.id == batch_id)).scalar_one_or_none()
+    if batch is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    code_count = db.execute(select(func.count(AntiCode.id)).where(AntiCode.batch_id == batch_id)).scalar_one()
+    product = batch.product
+
+    return templates.TemplateResponse(
+        request,
+        "admin/batch_delete_confirm.html",
+        {
+            "batch": batch,
+            "product": product,
+            "code_count": int(code_count or 0),
+            "error": "",
+        },
+    )
+
+
+@router.post("/batches/{batch_id}/delete")
+def batch_delete_submit(
+    request: Request,
+    batch_id: int,
+    confirm_text: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    batch = db.execute(select(Batch).where(Batch.id == batch_id)).scalar_one_or_none()
+    if batch is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    product_id = batch.product_id
+
+    if not _is_delete_confirmed(confirm_text):
+        code_count = db.execute(select(func.count(AntiCode.id)).where(AntiCode.batch_id == batch_id)).scalar_one()
+        product = batch.product
+        return templates.TemplateResponse(
+            request,
+            "admin/batch_delete_confirm.html",
+            {
+                "batch": batch,
+                "product": product,
+                "code_count": int(code_count or 0),
+                "error": "请输入 DELETE（或 删除）以确认永久删除。",
+            },
+            status_code=200,
+        )
+
+    db.delete(batch)
+    db.commit()
 
     return RedirectResponse(
         url=f"/admin/products/{product_id}/batches",

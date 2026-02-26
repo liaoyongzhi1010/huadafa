@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import shutil
+
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import RedirectResponse
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_303_SEE_OTHER
 
 from app.db import get_db
-from app.models import Product
+from app.models import AntiCode, Batch, Product
+from app.paths import UPLOADS_DIR
 from app.services.uploads import save_product_detail_image
 from app.web import templates
 
@@ -18,6 +21,11 @@ def _require_admin(request: Request):
     if not request.session.get("admin_logged_in"):
         return RedirectResponse(url="/admin/login", status_code=HTTP_303_SEE_OTHER)
     return None
+
+
+def _is_delete_confirmed(confirm_text: str) -> bool:
+    t = (confirm_text or "").strip()
+    return t == "删除" or t.upper() == "DELETE"
 
 
 @router.get("/products")
@@ -106,6 +114,71 @@ def product_edit_submit(
     product.detail_images = images
 
     db.add(product)
+    db.commit()
+
+    return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+
+@router.get("/products/{product_id}/delete")
+def product_delete_confirm_page(request: Request, product_id: int, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    batch_count = db.execute(select(func.count(Batch.id)).where(Batch.product_id == product_id)).scalar_one()
+    code_count = db.execute(select(func.count(AntiCode.id)).where(AntiCode.product_id == product_id)).scalar_one()
+
+    return templates.TemplateResponse(
+        request,
+        "admin/product_delete_confirm.html",
+        {
+            "product": product,
+            "batch_count": int(batch_count or 0),
+            "code_count": int(code_count or 0),
+            "error": "",
+        },
+    )
+
+
+@router.post("/products/{product_id}/delete")
+def product_delete_submit(
+    request: Request,
+    product_id: int,
+    confirm_text: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    if not _is_delete_confirmed(confirm_text):
+        batch_count = db.execute(select(func.count(Batch.id)).where(Batch.product_id == product_id)).scalar_one()
+        code_count = db.execute(select(func.count(AntiCode.id)).where(AntiCode.product_id == product_id)).scalar_one()
+        return templates.TemplateResponse(
+            request,
+            "admin/product_delete_confirm.html",
+            {
+                "product": product,
+                "batch_count": int(batch_count or 0),
+                "code_count": int(code_count or 0),
+                "error": "请输入 DELETE（或 删除）以确认永久删除。",
+            },
+            status_code=200,
+        )
+
+    uploads_dir = UPLOADS_DIR / "products" / str(product_id)
+    if uploads_dir.exists():
+        shutil.rmtree(uploads_dir, ignore_errors=True)
+
+    db.delete(product)
     db.commit()
 
     return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
