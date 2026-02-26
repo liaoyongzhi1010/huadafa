@@ -1,40 +1,48 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 {% block title %}新增推荐{% endblock %}
+{% block topbar_title %}新增推荐{% endblock %}
 {% block body %}
   <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">新增推荐</h1>
+        <div class="muted page-subtitle">推荐位无图则不展示</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/admin/recommendations">返回列表</a>
+      </div>
+    </div>
+
     <div class="card">
-      <div class="title center">新增推荐</div>
       {% if error %}
-        <div class="danger center" style="margin-bottom: 10px;">{{ error }}</div>
+        <div class="alert alert-danger" style="margin-bottom: 12px;">{{ error }}</div>
       {% endif %}
-      <form method="post" action="/admin/recommendations/new">
-        <div style="margin-bottom:10px;">
-          <div class="muted">推荐图片 URL</div>
-          <input name="image_url" value="{{ image_url or '' }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+      <form class="form" method="post" action="/admin/recommendations/new">
+        <div class="form-row">
+          <div class="label">推荐图片 URL</div>
+          <input class="input" name="image_url" value="{{ image_url or '' }}" placeholder="/uploads/xxx.png 或 https://..." />
         </div>
-        <div style="margin-bottom:10px;">
-          <div class="muted">跳转链接</div>
-          <input name="target_url" value="{{ target_url or '' }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        <div class="form-row">
+          <div class="label">跳转链接</div>
+          <input class="input" name="target_url" value="{{ target_url or '' }}" placeholder="https://1918imco.com/..." />
         </div>
-        <div style="margin-bottom:10px;">
-          <div class="muted">绑定产品ID（可选）</div>
-          <input name="product_id" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        <div class="form-row">
+          <div class="label">绑定产品 ID（可选）</div>
+          <input class="input" name="product_id" placeholder="留空表示全局推荐" />
         </div>
-        <div style="margin-bottom:10px;">
-          <div class="muted">排序（大到小）</div>
-          <input name="sort_order" value="0" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        <div class="form-row">
+          <div class="label">排序（大到小）</div>
+          <input class="input" name="sort_order" value="0" />
         </div>
-        <div style="margin: 10px 0 14px;">
-          <label>
-            <input type="checkbox" name="enabled" checked />
-            启用
-          </label>
+        <label style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" name="enabled" checked />
+          <span style="font-weight:800;">启用</span>
+        </label>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">保存</button>
+          <a class="btn" href="/admin/recommendations">取消</a>
         </div>
-        <button class="btn" type="submit">保存</button>
       </form>
-      <div style="height:10px;"></div>
-      <a class="muted" href="/admin/recommendations">返回列表</a>
     </div>
   </div>
 {% endblock %}
-

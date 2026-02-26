@@ -1,31 +1,49 @@
-{% extends "base.html" %}
-{% block title %}产品管理{% endblock %}
+{% extends "admin/base.html" %}
+{% block title %}产品{% endblock %}
+{% block topbar_title %}产品 / 批次{% endblock %}
 {% block body %}
   <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">产品</h1>
+        <div class="muted page-subtitle">创建产品信息，进入批次生成防伪码并导出</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" href="/admin/products/new">新增产品</a>
+      </div>
+    </div>
+
     <div class="card">
-      <div class="title center">产品管理</div>
-      <div style="height:10px;"></div>
-      <a class="btn" href="/admin/products/new">新增产品</a>
-      <div class="hr"></div>
       {% if products and products|length > 0 %}
-        {% for p in products %}
-          <div style="padding:10px 0; border-bottom:1px solid #f3f4f6;">
-            <div style="font-weight:700;">{{ p.name }}</div>
-            <div class="muted">ID: {{ p.id }}</div>
-            <div style="margin-top:6px;">
-              <a class="muted" href="/admin/products/{{ p.id }}/batches">管理批次</a>
-              &nbsp;·&nbsp;
-              <a class="muted" href="/admin/products/{{ p.id }}/edit">编辑</a>
-            </div>
-          </div>
-        {% endfor %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="min-width:280px;">产品</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in products %}
+                <tr>
+                  <td>
+                    <div style="font-weight:900;">{{ p.name }}</div>
+                    <div class="muted" style="font-size:13px;">ID {{ p.id }}</div>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <a class="btn" href="/admin/products/{{ p.id }}/batches">批次</a>
+                      <a class="btn" href="/admin/products/{{ p.id }}/edit">编辑</a>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       {% else %}
-        <div class="muted center">暂无产品</div>
+        <div class="muted">暂无产品，先点击右上角「新增产品」。</div>
       {% endif %}
-      <div style="height:12px;"></div>
-      <form method="post" action="/admin/logout">
-        <button class="btn" type="submit">退出登录</button>
-      </form>
     </div>
   </div>
 {% endblock %}

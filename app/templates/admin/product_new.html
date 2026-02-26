@@ -1,23 +1,33 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 {% block title %}新增产品{% endblock %}
+{% block topbar_title %}新增产品{% endblock %}
 {% block body %}
   <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">新增产品</h1>
+        <div class="muted page-subtitle">创建后可进入批次管理生成防伪码</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/admin/products">返回列表</a>
+      </div>
+    </div>
+
     <div class="card">
-      <div class="title center">新增产品</div>
-      <form method="post" action="/admin/products/new">
-        <div style="margin-bottom:10px;">
-          <div class="muted">产品名称</div>
-          <input name="name" required style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+      <form class="form" method="post" action="/admin/products/new">
+        <div class="form-row">
+          <div class="label">产品名称</div>
+          <input class="input" name="name" required placeholder="例如：ICOM 打火机" />
         </div>
-        <div style="margin-bottom:14px;">
-          <div class="muted">产品详情文字</div>
-          <textarea name="detail_text" rows="5" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;"></textarea>
+        <div class="form-row">
+          <div class="label">产品详情文字</div>
+          <textarea class="textarea" name="detail_text" rows="6" placeholder="可填写产品规格、材质、说明等"></textarea>
         </div>
-        <button class="btn" type="submit">保存</button>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">保存</button>
+          <a class="btn" href="/admin/products">取消</a>
+        </div>
       </form>
-      <div style="height:10px;"></div>
-      <a class="muted" href="/admin/products">返回列表</a>
     </div>
   </div>
 {% endblock %}
-

@@ -1,25 +1,33 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 {% block title %}新增批次{% endblock %}
+{% block topbar_title %}新增批次{% endblock %}
 {% block body %}
   <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">新增批次</h1>
+        <div class="muted page-subtitle">产品：{{ product.name }}（ID {{ product.id }}）</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/admin/products/{{ product.id }}/batches">返回批次列表</a>
+      </div>
+    </div>
+
     <div class="card">
-      <div class="title center">新增批次</div>
-      <div class="muted center">产品：{{ product.name }}（ID {{ product.id }}）</div>
-      <div style="height:10px;"></div>
-      <form method="post" action="/admin/products/{{ product.id }}/batches/new">
-        <div style="margin-bottom:10px;">
-          <div class="muted">生产日期</div>
-          <input name="production_date" value="{{ today }}" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+      <form class="form" method="post" action="/admin/products/{{ product.id }}/batches/new">
+        <div class="form-row">
+          <div class="label">生产日期</div>
+          <input class="input" name="production_date" value="{{ today }}" />
         </div>
-        <div style="margin-bottom:14px;">
-          <div class="muted">备注</div>
-          <input name="note" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        <div class="form-row">
+          <div class="label">备注</div>
+          <input class="input" name="note" placeholder="例如：第一批" />
         </div>
-        <button class="btn" type="submit">创建批次</button>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">创建批次</button>
+          <a class="btn" href="/admin/products/{{ product.id }}/batches">取消</a>
+        </div>
       </form>
-      <div style="height:10px;"></div>
-      <a class="muted" href="/admin/products/{{ product.id }}/batches">返回批次列表</a>
     </div>
   </div>
 {% endblock %}
-
