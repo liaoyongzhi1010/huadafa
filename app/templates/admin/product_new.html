@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}新增产品{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="title center">新增产品</div>
+      <form method="post" action="/admin/products/new">
+        <div style="margin-bottom:10px;">
+          <div class="muted">产品名称</div>
+          <input name="name" required style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <div style="margin-bottom:14px;">
+          <div class="muted">产品详情文字</div>
+          <textarea name="detail_text" rows="5" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;"></textarea>
+        </div>
+        <button class="btn" type="submit">保存</button>
+      </form>
+      <div style="height:10px;"></div>
+      <a class="muted" href="/admin/products">返回列表</a>
+    </div>
+  </div>
+{% endblock %}
+

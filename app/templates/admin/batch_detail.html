@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}批次详情{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="card">
+      <div class="title center">批次详情</div>
+      <div class="muted">批次ID：{{ batch.id }}</div>
+      <div class="muted">生产日期：{{ batch.production_date }}</div>
+      <div class="muted">防伪码数量：{{ code_count }}</div>
+      <div class="hr"></div>
+      <form method="post" action="/admin/batches/{{ batch.id }}/codes/generate">
+        <div style="margin-bottom:14px;">
+          <div class="muted">生成数量（<=10000）</div>
+          <input name="quantity" value="100" style="width:100%; padding:10px; border-radius:10px; border:1px solid #e5e7eb;" />
+        </div>
+        <button class="btn" type="submit">生成防伪码</button>
+      </form>
+      <div style="height:10px;"></div>
+      <a class="muted" href="/admin/products">返回产品列表</a>
+    </div>
+  </div>
+{% endblock %}
+
