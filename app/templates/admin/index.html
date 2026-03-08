@@ -1,0 +1,72 @@
+{% extends "admin/base.html" %}
+{% block title %}仪表盘{% endblock %}
+{% block topbar_title %}仪表盘{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">仪表盘</h1>
+        <div class="muted page-subtitle">核心统计 + 快速入口</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/admin/help">使用文档</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div style="font-weight:900; margin-bottom:12px;">数据统计</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">今日扫码</div>
+          <div class="stat-value">{{ stats.today_scans }}</div>
+          <div class="stat-hint">从今天 00:00 开始统计</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">近7天扫码</div>
+          <div class="stat-value">{{ stats.last7_scans }}</div>
+          <div class="stat-hint">滚动 7 天</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">防伪码总数</div>
+          <div class="stat-value">{{ stats.total_codes }}</div>
+          <div class="stat-hint">已生成的全部防伪码</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">批次数</div>
+          <div class="stat-value">{{ stats.total_batches }}</div>
+          <div class="stat-hint">全部批次</div>
+        </div>
+      </div>
+    </div>
+
+    {% if top_codes and top_codes|length > 0 %}
+      <div style="height:14px;"></div>
+      <div class="card">
+        <div class="page-header" style="margin-bottom:10px;">
+          <div>
+            <div style="font-weight:900; font-size:16px;">高频验证 Top</div>
+            <div class="muted" style="font-size:12px;">按累计验证次数排序</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="min-width:220px;">防伪码</th>
+                <th>验证次数</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in top_codes %}
+                <tr>
+                  <td style="font-weight:900;">{{ row.code }}</td>
+                  <td class="muted">{{ row.scan_count }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

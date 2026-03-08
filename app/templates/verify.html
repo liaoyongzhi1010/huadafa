@@ -1,0 +1,710 @@
+{% extends "base.html" %}
+{% block title %}防伪查询{% endblock %}
+{% block head_extra %}
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --brand: #c81e1e;
+      --brand-deep: #8f1010;
+      --accent: #2563eb;
+      --ok: #16a34a;
+      --warn: #f59e0b;
+      --danger: #dc2626;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(860px 280px at -6% -6%, rgba(200, 30, 30, 0.12), rgba(200, 30, 30, 0) 68%),
+        radial-gradient(860px 300px at 106% -10%, rgba(37, 99, 235, 0.10), rgba(37, 99, 235, 0) 70%),
+        var(--bg);
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 14px;
+    }
+
+    .v-shell {
+      min-height: 100vh;
+      padding-bottom: 22px;
+    }
+
+    .v-hero {
+      padding: 18px 0 12px;
+    }
+
+    .v-brand {
+      border-radius: 18px;
+      background: linear-gradient(132deg, #1f2937, #0f172a 56%, #3d0f1b 100%);
+      color: #fff;
+      padding: 14px 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+    }
+
+    .v-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      background: rgba(255, 255, 255, 0.13);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0;
+      flex: 0 0 auto;
+    }
+
+    .v-brand-name {
+      font-size: 19px;
+      font-weight: 760;
+      line-height: 1.2;
+      letter-spacing: 0.2px;
+    }
+
+    .v-brand-sub {
+      margin-top: 3px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.78);
+      letter-spacing: 0.4px;
+    }
+
+    .v-card {
+      border-radius: 20px;
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      background: var(--surface);
+      padding: 17px;
+      box-shadow:
+        0 16px 36px rgba(15, 23, 42, 0.10),
+        0 4px 14px rgba(15, 23, 42, 0.06);
+    }
+
+    .v-status {
+      text-align: center;
+      padding: 4px 0 2px;
+    }
+
+    .v-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      font-size: 34px;
+      font-weight: 900;
+      user-select: none;
+    }
+
+    .v-icon--ok {
+      color: #0b8f3c;
+      background: rgba(22, 163, 74, 0.12);
+      border: 1px solid rgba(22, 163, 74, 0.22);
+    }
+
+    .v-icon--bad {
+      color: var(--danger);
+      background: rgba(220, 38, 38, 0.12);
+      border: 1px solid rgba(220, 38, 38, 0.22);
+    }
+
+    .v-status-main {
+      margin-top: 10px;
+    }
+
+    .v-title {
+      margin: 0;
+      font-size: clamp(20px, 5vw, 25px);
+      font-weight: 760;
+      line-height: 1.25;
+      color: #0f172a;
+      word-break: break-word;
+      text-align: center;
+    }
+
+    .v-status-sub {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #64748b;
+      letter-spacing: 0.15px;
+      text-align: center;
+    }
+
+    .v-meta-line {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.45;
+      letter-spacing: 0.12px;
+      color: #475569;
+    }
+
+    .v-meta-date {
+      color: #334155;
+      font-weight: 620;
+    }
+
+    .v-meta-sep {
+      display: inline-block;
+      margin: 0 8px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .v-meta-status {
+      font-weight: 700;
+    }
+
+    .v-meta-status--first {
+      color: #15803d;
+    }
+
+    .v-meta-status--repeat {
+      color: #b45309;
+    }
+
+    .v-preview {
+      margin-top: 11px;
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eff6ff;
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 620;
+    }
+
+    .v-alert {
+      margin-top: 12px;
+      border-radius: 14px;
+      padding: 11px 12px;
+      color: #b91c1c;
+      background: rgba(220, 38, 38, 0.09);
+      border: 1px solid rgba(220, 38, 38, 0.18);
+      font-size: 14px;
+      line-height: 1.52;
+      font-weight: 620;
+      text-align: center;
+    }
+
+    .hr {
+      margin: 16px 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(226, 232, 240, 0), rgba(203, 213, 225, 0.95), rgba(226, 232, 240, 0));
+    }
+
+    .v-block {
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+    }
+
+    .v-section-title {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 720;
+      color: #0f172a;
+      letter-spacing: 0.15px;
+    }
+
+    .v-list {
+      display: grid;
+      gap: 0;
+    }
+
+    .v-row {
+      color: #64748b;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid #e9eef5;
+      border-radius: 0;
+      padding: 9px 2px;
+      font-size: 13px;
+      line-height: 1.42;
+    }
+    .v-row:last-child { border-bottom: 0; }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 2px;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      border: 1px solid #d5dee9;
+      background: #fff;
+      color: #4b5563;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 650;
+      padding: 8px 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      border-color: rgba(200, 30, 30, 0.55);
+      background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+      box-shadow: 0 7px 16px rgba(200, 30, 30, 0.22);
+    }
+
+    .tab-panel {
+      margin-top: 12px;
+    }
+
+    .hidden { display: none; }
+
+    .pre { white-space: pre-wrap; }
+
+    .v-content-text {
+      display: block;
+      margin-top: 11px;
+      color: #111827;
+      font-size: 15.5px;
+      line-height: 2;
+      letter-spacing: 0.22px;
+      font-weight: 420;
+      text-decoration: none;
+      padding: 0;
+      background: transparent;
+      border: 0;
+    }
+
+    .v-content-text:not([href]) {
+      padding: 12px 14px 12px 15px;
+      border-radius: 14px;
+      border: 1px solid #dde5f0;
+      border-left: 3px solid #8fa2ba;
+      background: linear-gradient(160deg, #ffffff 0%, #f6f8fc 100%);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    .v-content-text[href] {
+      color: #0f4ca8;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .v-content-image-link,
+    .v-content-image-box {
+      display: block;
+      margin-top: 11px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #dbe3ee;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.09);
+      aspect-ratio: 3 / 2;
+    }
+
+    .v-content-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .v-reco-wrap {
+      margin-top: 2px;
+    }
+
+    .v-reco-track {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-behavior: smooth;
+      border-radius: 16px;
+    }
+
+    .v-reco-track::-webkit-scrollbar { display: none; }
+
+    .v-reco-item {
+      min-width: 100%;
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+    }
+
+    .v-reco {
+      display: block;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #dbe3ee;
+      background: #fff;
+      text-decoration: none;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.11);
+      aspect-ratio: 3 / 2;
+    }
+
+    .v-reco img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .v-reco-controls {
+      margin-top: 9px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .v-reco-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .v-reco-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      border: 0;
+      background: #cbd5e1;
+      opacity: 0.92;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .v-reco-dot.active {
+      width: 18px;
+      background: #334155;
+      opacity: 1;
+    }
+
+    .v-bottom {
+      margin-top: 12px;
+    }
+
+    .btn {
+      display: inline-block;
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 14px;
+      text-decoration: none;
+      text-align: center;
+      background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+      color: #fff;
+      font-size: 15px;
+      font-weight: 680;
+      letter-spacing: 0.2px;
+      border: 1px solid rgba(200, 30, 30, 0.45);
+      padding: 12px 14px;
+      box-shadow: 0 10px 20px rgba(143, 16, 16, 0.22);
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    @media (max-width: 390px) {
+      .v-brand-name { font-size: 17px; }
+      .v-card { padding: 14px; border-radius: 16px; }
+      .v-meta-line { font-size: 13px; }
+      .tab-btn { padding: 8px 12px; }
+    }
+  </style>
+{% endblock %}
+{% block body %}
+  <div class="v-shell">
+    <div class="v-hero">
+      <div class="container">
+        <div class="v-brand">
+          <div class="v-mark">花大发</div>
+          <div>
+            <div class="v-brand-name">花大发 防伪中心</div>
+            <div class="v-brand-sub">HUA DA FA VERIFICATION</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="v-card">
+        <div class="v-status">
+          {% if status == "genuine" %}
+            <div class="v-icon v-icon--ok">✓</div>
+          {% else %}
+            <div class="v-icon v-icon--bad">!</div>
+          {% endif %}
+
+          <div class="v-status-main">
+            <div class="v-title">{{ message }}</div>
+            {% if status == "genuine" %}
+              <div class="v-status-sub">官方防伪验证结果</div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if status == "genuine" %}
+          <div class="v-meta-line">
+            <span class="v-meta-date">生产日期：{{ production_date or "—" }}</span>
+            <span class="v-meta-sep">·</span>
+            <span class="v-meta-status {% if query_status_text == '首次查询' %}v-meta-status--first{% else %}v-meta-status--repeat{% endif %}">
+              {{ query_status_text }}
+            </span>
+          </div>
+
+          {% if preview_mode %}
+            <div class="v-preview">预览模式（不计入查询）</div>
+          {% endif %}
+        {% endif %}
+
+        {% if status == "genuine" %}
+          {% if warning_active %}
+            <div class="v-alert">{{ text_warning }}</div>
+          {% endif %}
+
+          {% if recent_events and recent_events|length > 0 %}
+            <div class="hr"></div>
+            <div class="v-block">
+              <div class="v-section-title">最近验证时间</div>
+              <div class="v-list">
+                {% for t in recent_events[:3] %}
+                  <div class="v-row">{{ t }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if verify_sections and verify_sections|length > 0 %}
+            <div class="hr"></div>
+            {% if not full_mode %}
+              <div class="tabs" role="tablist" aria-label="tabs">
+                {% for section in verify_sections %}
+                  <button type="button" class="tab-btn{% if loop.first %} active{% endif %}" data-tab="{{ section.id }}">{{ section.title }}</button>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% for section in verify_sections %}
+              <div
+                id="tab-{{ section.id }}"
+                data-section-id="{{ section.id }}"
+                class="tab-panel{% if not full_mode and not loop.first %} hidden{% endif %}"
+              >
+                {% if full_mode %}
+                  {% if not loop.first %}<div class="hr"></div>{% endif %}
+                  <div class="v-section-title">{{ section.title }}</div>
+                {% endif %}
+                {% if section.blocks and section.blocks|length > 0 %}
+                  {% for block in section.blocks %}
+                    {% if block.type == "text" %}
+                      {% if block.link %}
+                        <a class="v-content-text pre" href="{{ block.link }}" target="_blank" rel="noopener noreferrer">{{ block.text }}</a>
+                      {% else %}
+                        <div class="v-content-text pre">{{ block.text }}</div>
+                      {% endif %}
+                    {% elif block.type == "image" %}
+                      {% if block.link %}
+                        <a class="v-content-image-link" href="{{ block.link }}" target="_blank" rel="noopener noreferrer">
+                          <img class="v-content-image" src="{{ block.url }}" alt="{{ section.title }}图片" />
+                        </a>
+                      {% else %}
+                        <div class="v-content-image-box">
+                          <img class="v-content-image" src="{{ block.url }}" alt="{{ section.title }}图片" />
+                        </div>
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <div class="muted">暂无内容</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% endif %}
+
+          <div class="hr"></div>
+          <div class="v-section-title">官方推荐</div>
+          {% if recommendations and recommendations|length > 0 %}
+            <div class="v-reco-wrap">
+              <div class="v-reco-track" id="vRecoTrack">
+                {% for r in recommendations %}
+                  <div class="v-reco-item">
+                    {% if r.target_url %}
+                      <a class="v-reco" href="{{ r.target_url }}" aria-label="recommendation link">
+                        <img src="{{ r.image_url }}" alt="推荐" />
+                      </a>
+                    {% else %}
+                      <div class="v-reco">
+                        <img src="{{ r.image_url }}" alt="推荐" />
+                      </div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+              {% if recommendations|length > 1 %}
+                <div class="v-reco-controls">
+                  <div class="v-reco-dots" id="vRecoDots">
+                    {% for r in recommendations %}
+                      <button
+                        type="button"
+                        class="v-reco-dot{% if loop.index0 == 0 %} active{% endif %}"
+                        data-index="{{ loop.index0 }}"
+                        aria-label="推荐{{ loop.index }}"
+                      ></button>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="muted">暂无推荐</div>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      {% if contact_us_url %}
+        <div class="v-bottom">
+          <a class="btn" href="{{ contact_us_url }}">联系我们</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if status == "genuine" %}
+  <script>
+    (function () {
+      function activateTab(tab) {
+        document.querySelectorAll(".tab-btn").forEach(function (b) {
+          b.classList.toggle("active", b.dataset.tab === tab);
+        });
+        document.querySelectorAll(".tab-panel[data-section-id]").forEach(function (el) {
+          el.classList.toggle("hidden", el.getAttribute("data-section-id") !== tab);
+        });
+      }
+
+      document.querySelectorAll(".tab-btn").forEach(function (b) {
+        b.addEventListener("click", function () { activateTab(b.dataset.tab); });
+      });
+
+      function initRecommendationCarousel() {
+        var track = document.getElementById("vRecoTrack");
+        if (!track) return;
+
+        var dotsRoot = document.getElementById("vRecoDots");
+        var dots = dotsRoot ? Array.prototype.slice.call(dotsRoot.querySelectorAll(".v-reco-dot")) : [];
+        var items = Array.prototype.slice.call(track.querySelectorAll(".v-reco-item"));
+        var autoTimer = null;
+        var rafTicking = false;
+        var lastManualAt = 0;
+        var AUTO_MS = 3200;
+
+        function markManual() {
+          lastManualAt = Date.now();
+        }
+
+        function maxIndex() {
+          return Math.max(0, items.length - 1);
+        }
+
+        function nearestIndex() {
+          if (!items.length) return 0;
+          var left = track.scrollLeft;
+          var best = 0;
+          var bestDist = Number.POSITIVE_INFINITY;
+          items.forEach(function (item, i) {
+            var dist = Math.abs(item.offsetLeft - left);
+            if (dist < bestDist) {
+              bestDist = dist;
+              best = i;
+            }
+          });
+          return best;
+        }
+
+        function setActive(index) {
+          dots.forEach(function (dot, i) {
+            dot.classList.toggle("active", i === index);
+          });
+        }
+
+        function goTo(index, behavior) {
+          if (!items.length) return;
+          var safe = Math.max(0, Math.min(maxIndex(), index));
+          var target = items[safe];
+          if (!target) return;
+          track.scrollTo({ left: target.offsetLeft, behavior: behavior || "smooth" });
+          setActive(safe);
+        }
+
+        function syncActiveSoon() {
+          if (!dots.length) return;
+          if (rafTicking) return;
+          rafTicking = true;
+          requestAnimationFrame(function () {
+            rafTicking = false;
+            setActive(nearestIndex());
+          });
+        }
+
+        function startAutoPlay() {
+          if (maxIndex() < 1) return;
+          if (autoTimer) clearInterval(autoTimer);
+          autoTimer = setInterval(function () {
+            if (document.hidden) return;
+            if (Date.now() - lastManualAt < AUTO_MS + 450) return;
+            var idx = nearestIndex();
+            goTo(idx >= maxIndex() ? 0 : idx + 1, "smooth");
+          }, AUTO_MS);
+        }
+
+        dots.forEach(function (dot) {
+          dot.addEventListener("click", function () {
+            markManual();
+            var idx = Number(dot.getAttribute("data-index") || "0");
+            goTo(idx, "smooth");
+          });
+        });
+
+        track.addEventListener("scroll", function () {
+          markManual();
+          syncActiveSoon();
+        }, { passive: true });
+
+        track.addEventListener("touchstart", markManual, { passive: true });
+        track.addEventListener("touchend", syncActiveSoon, { passive: true });
+        track.addEventListener("pointerdown", markManual);
+        track.addEventListener("pointerup", syncActiveSoon);
+        track.addEventListener("wheel", markManual, { passive: true });
+
+        window.addEventListener("resize", syncActiveSoon);
+
+        setActive(nearestIndex());
+        startAutoPlay();
+      }
+
+      initRecommendationCarousel();
+    })();
+  </script>
+  {% endif %}
+{% endblock %}

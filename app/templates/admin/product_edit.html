@@ -1,0 +1,58 @@
+{% extends "admin/base.html" %}
+{% block title %}编辑产品{% endblock %}
+{% block topbar_title %}编辑产品{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">编辑产品</h1>
+        <div class="muted page-subtitle">{{ product.name }}</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/admin/products">返回列表</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <form class="form" method="post" action="/admin/products/{{ product.id }}/edit" enctype="multipart/form-data">
+        <div class="form-row">
+          <div class="label">产品名称</div>
+          <input class="input" name="name" required value="{{ product.name }}" />
+        </div>
+        <div class="form-row">
+          <div class="label">产品详情文字</div>
+          <textarea class="textarea" name="detail_text" rows="8">{{ product.detail_text }}</textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="label">产品详情图片（可多选）</div>
+          <input class="file" type="file" name="detail_images" multiple />
+          <div class="muted" style="font-size:12px;">支持多张图片，验证页按上传顺序展示</div>
+        </div>
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" name="clear_images" />
+          <span class="muted">清空现有图片</span>
+        </label>
+
+        {% if product.detail_images and product.detail_images|length > 0 %}
+          <div style="border-top:1px solid var(--border); padding-top:14px;">
+            <div style="font-weight:900; margin-bottom:10px;">当前图片</div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+              {% for img in product.detail_images %}
+                <div style="border:1px solid var(--border); border-radius:14px; padding:10px; background:#fff;">
+                  <img src="{{ img.url }}" alt="img" style="width:100%; border-radius:12px;" />
+                  <div class="muted" style="word-break: break-all; font-size:12px; margin-top:8px;">{{ img.url }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">保存</button>
+          <a class="btn" href="/admin/products/{{ product.id }}/batches">进入批次</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

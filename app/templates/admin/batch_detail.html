@@ -1,0 +1,32 @@
+{% extends "admin/base.html" %}
+{% block title %}批次详情{% endblock %}
+{% block topbar_title %}批次详情{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">批次 {{ batch.id }}</h1>
+        <div class="muted page-subtitle">生产日期：{{ batch.production_date }} · 防伪码数量：{{ code_count }}</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/admin/batches/{{ batch.id }}/export/csv">导出 CSV</a>
+        <a class="btn" href="/admin/batches/{{ batch.id }}/export/qrcodes.zip">导出二维码 ZIP</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:900; margin-bottom:10px;">生成防伪码</div>
+      <form class="form" method="post" action="/admin/batches/{{ batch.id }}/codes/generate">
+        <div class="form-row">
+          <div class="label">生成数量（单次 ≤ 10000）</div>
+          <input class="input" name="quantity" value="100" />
+          <div class="muted" style="font-size:12px;">生成后可直接导出 CSV / 二维码 ZIP</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">生成</button>
+          <a class="btn" href="/admin/products">返回产品</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

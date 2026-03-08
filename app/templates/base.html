@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}防伪查询{% endblock %}</title>
+    <style>
+      :root { --bg: #eef3f7; --card: #ffffff; --text: #111827; --muted: #6b7280; --danger: #dc2626; }
+      body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", Arial, sans-serif; background: var(--bg); color: var(--text); }
+      .container { max-width: 420px; margin: 0 auto; padding: 16px; }
+      .card { background: var(--card); border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+      .center { text-align: center; }
+      .muted { color: var(--muted); font-size: 13px; }
+      .title { font-size: 20px; font-weight: 700; margin: 6px 0 8px; }
+      .big { font-size: 18px; font-weight: 700; }
+      .danger { color: var(--danger); font-weight: 700; }
+      .hr { height: 1px; background: #e5e7eb; margin: 14px 0; }
+      .btn { display: inline-block; width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px; text-decoration: none; text-align: center; background: #111827; color: #fff; font-weight: 700; }
+      .tabs { display: flex; gap: 12px; justify-content: center; font-weight: 700; margin-top: 10px; }
+      .tab { color: var(--muted); }
+    </style>
+    {% block head_extra %}{% endblock %}
+  </head>
+  <body>
+    {% block body %}{% endblock %}
+  </body>
+</html>

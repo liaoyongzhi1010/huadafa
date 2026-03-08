@@ -1,0 +1,158 @@
+{% extends "admin/base.html" %}
+{% block title %}商品推荐{% endblock %}
+{% block topbar_title %}商品推荐{% endblock %}
+{% block body %}
+  <style>
+    .editor-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 14px;
+      align-items: start;
+    }
+    .editor-column {
+      min-width: 0;
+      display: grid;
+      gap: 12px;
+    }
+    .preview-panel {
+      position: sticky;
+      top: 84px;
+      display: grid;
+      gap: 12px;
+    }
+    .phone-title {
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .phone-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .phone-shell {
+      width: 100%;
+      max-width: 380px;
+      margin: 0 auto;
+      border: 10px solid #0f172a;
+      border-radius: 28px;
+      background: #fff;
+      overflow: hidden;
+      aspect-ratio: 390 / 844;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+    }
+    .phone-shell iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+
+    @media (max-width: 1160px) {
+      .editor-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .preview-panel {
+        position: static;
+      }
+    }
+  </style>
+
+  <div class="container">
+    {% include "admin/_product_tabs.html" %}
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">商品推荐</h1>
+        <div class="muted page-subtitle">产品：{{ product.name }}（左侧编辑，右侧手机整页预览）</div>
+        <div class="muted" style="margin-top:6px; font-size:12px;">提示：填写跳转链接后，前台点击推荐图会跳转；不填则不跳转。</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/admin/products/{{ product.id }}/content">去产品描述设置</a>
+      </div>
+    </div>
+
+    <div class="editor-layout">
+      <div class="editor-column">
+        <div class="card">
+          {% if error %}
+            <div class="alert alert-danger" style="margin-bottom: 12px;">{{ error }}</div>
+          {% endif %}
+          <form class="form" method="post" action="/admin/products/{{ product.id }}/recommendations/new" enctype="multipart/form-data">
+            <div class="form-row">
+              <div class="label">推荐图片（本地上传）</div>
+              <input class="file" type="file" name="image_file" />
+              <div class="muted" style="font-size:12px;">新增推荐后，在下方用上下箭头调整展示顺序。</div>
+            </div>
+            <div class="form-row">
+              <div class="label">跳转链接（可选）</div>
+              <input class="input" name="target_url" value="{{ target_url or '' }}" placeholder="https://your-site.example/..." />
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary" type="submit">保存</button>
+              <a class="btn" href="/admin/products/{{ product.id }}/batches">返回批次</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          {% if recs and recs|length > 0 %}
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="min-width:80px;">顺序</th>
+                    <th>跳转链接</th>
+                    <th style="min-width:220px;">图片 URL</th>
+                    <th style="min-width:220px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in recs %}
+                    <tr>
+                      <td style="font-weight:900;">{{ loop.index }}</td>
+                      <td class="muted" style="word-break:break-all;">{{ r.target_url or "—" }}</td>
+                      <td class="muted" style="word-break:break-all;">{{ r.image_url }}</td>
+                      <td>
+                        <div class="actions">
+                          <form method="post" action="/admin/products/{{ product.id }}/recommendations/{{ r.id }}/move-up" style="margin:0;">
+                            <button class="btn" type="submit" title="上移">↑</button>
+                          </form>
+                          <form method="post" action="/admin/products/{{ product.id }}/recommendations/{{ r.id }}/move-down" style="margin:0;">
+                            <button class="btn" type="submit" title="下移">↓</button>
+                          </form>
+                          <form method="post" action="/admin/products/{{ product.id }}/recommendations/{{ r.id }}/delete" style="margin:0;" onsubmit="return confirm('确认删除这条推荐？');">
+                            <button class="btn btn-danger" type="submit">删除</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="muted">当前产品暂无推荐。</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <aside>
+        <div class="preview-panel">
+          <div class="card">
+            <div class="phone-title">手机整页预览：防伪页</div>
+            <div class="phone-note">完整手机页面渲染，展示扫码后的防伪查询页面（含产品描述与推荐）。</div>
+            {% if preview_verify_url %}
+              <div class="phone-shell">
+                <iframe src="{{ preview_verify_url }}" title="防伪页预览" loading="lazy"></iframe>
+              </div>
+            {% else %}
+              <div class="alert" style="margin-bottom:10px;">暂无可用防伪码，先新建批次后可预览完整防伪页。</div>
+              <a class="btn" href="/admin/products/{{ product.id }}/batches/new">去新建批次</a>
+            {% endif %}
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+{% endblock %}

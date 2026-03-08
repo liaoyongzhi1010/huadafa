@@ -13,6 +13,14 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+如果环境没有 `python3-venv`，可用 `.deps` 方式：
+
+```bash
+python3 -m pip install -r requirements.txt -t .deps
+
+PYTHONPATH=.deps python3 -m uvicorn app.main:app --reload
+```
+
 打开：
 - `http://127.0.0.1:8000/health`
 
@@ -21,5 +29,5 @@ uvicorn app.main:app --reload
 ```bash
 . .venv/bin/activate
 pytest -q
+PYTHONPATH=.deps pytest -q
 ```
-

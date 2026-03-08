@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% block title %}删除产品{% endblock %}
+{% block topbar_title %}删除产品{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">删除产品</h1>
+        <div class="muted page-subtitle">产品：{{ product.name }}</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/admin/products">返回列表</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="alert alert-danger">
+        此操作不可恢复。将永久删除该产品的全部数据：<span style="font-weight:900;">{{ batch_count }}</span> 个批次、<span style="font-weight:900;">{{ code_count }}</span> 个防伪码，以及相关扫码记录与推荐配置。
+      </div>
+
+      {% if error %}
+        <div style="height:12px;"></div>
+        <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
+
+      <div style="height:14px;"></div>
+      <form class="form" method="post" action="/admin/products/{{ product.id }}/delete">
+        <div class="form-row">
+          <div class="label">请输入 DELETE（或 删除）确认永久删除</div>
+          <input class="input" name="confirm_text" placeholder="DELETE" autocomplete="off" />
+        </div>
+        <div class="actions">
+          <a class="btn" href="/admin/products">取消</a>
+          <button class="btn btn-danger" type="submit">永久删除</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+

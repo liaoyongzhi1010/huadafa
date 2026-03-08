@@ -1,0 +1,46 @@
+{% extends "admin/base.html" %}
+{% block title %}商品推荐{% endblock %}
+{% block topbar_title %}商品推荐{% endblock %}
+{% block body %}
+  <div class="container">
+    {% include "admin/_product_tabs.html" %}
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">商品推荐</h1>
+        <div class="muted page-subtitle">当前产品独立配置；按 sort 值从大到小优先</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" href="/admin/products/{{ product.id }}/recommendations/new">新增推荐</a>
+      </div>
+    </div>
+
+    <div class="card">
+      {% if recs and recs|length > 0 %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="min-width:120px;">状态</th>
+                <th style="min-width:120px;">sort</th>
+                <th>图片 URL</th>
+                <th>跳转链接</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in recs %}
+                <tr>
+                  <td style="font-weight:900;">{% if r.enabled %}启用{% else %}停用{% endif %}</td>
+                  <td class="muted">{{ r.sort_order }}</td>
+                  <td class="muted" style="word-break: break-all;">{{ r.image_url }}</td>
+                  <td class="muted" style="word-break: break-all;">{{ r.target_url }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="muted">当前产品暂无推荐，点击右上角「新增推荐」。</div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

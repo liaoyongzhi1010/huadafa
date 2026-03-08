@@ -1,0 +1,62 @@
+{% extends "admin/base.html" %}
+{% block title %}批次{% endblock %}
+{% block topbar_title %}产品 / 批次{% endblock %}
+{% block body %}
+  <div class="container">
+    {% include "admin/_product_tabs.html" %}
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">批次</h1>
+        <div class="muted page-subtitle">产品：{{ product.name }}</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" href="/admin/products/{{ product.id }}/batches/new">新增批次</a>
+        <a class="btn" href="/admin/products/{{ product.id }}/export/generic-qrcode.png">通用二维码</a>
+      </div>
+    </div>
+
+    <div class="card">
+      {% if batch_rows and batch_rows|length > 0 %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="min-width:160px;">生产日期</th>
+                <th style="min-width:200px;">备注</th>
+                <th style="min-width:140px;">数量</th>
+                <th style="min-width:360px;">导出</th>
+                <th style="min-width:140px;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in batch_rows %}
+                {% set b = row.batch %}
+                <tr>
+                  <td>
+                    <div style="font-weight:900;">{{ b.production_date }}</div>
+                  </td>
+                  <td class="muted">{{ b.note }}</td>
+                  <td>
+                    <div style="font-weight:900;">{{ row.code_count }}</div>
+                    <div class="muted" style="font-size:12px;">防伪码</div>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <a class="btn" href="/admin/batches/{{ b.id }}/export/csv">CSV</a>
+                      <a class="btn" href="/admin/batches/{{ b.id }}/export/qrcodes.zip">二维码 ZIP</a>
+                    </div>
+                  </td>
+                  <td>
+                    <a class="btn btn-danger" href="/admin/batches/{{ b.id }}/delete">删除</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="muted">暂无批次，点击右上角「新增批次」。</div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

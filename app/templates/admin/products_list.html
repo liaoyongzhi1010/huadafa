@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+{% block title %}产品{% endblock %}
+{% block topbar_title %}产品 / 批次{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">产品</h1>
+        <div class="muted page-subtitle">每个产品独立管理批次、商品推荐、产品描述</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" href="/admin/products/new">新增产品</a>
+      </div>
+    </div>
+
+    <div class="card">
+      {% if products and products|length > 0 %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="min-width:280px;">产品</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in products %}
+                <tr>
+                  <td>
+                    <div style="font-weight:900;">{{ p.name }}</div>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <a class="btn btn-primary" href="/admin/products/{{ p.id }}/batches">产品工作台</a>
+                      <a class="btn btn-danger" href="/admin/products/{{ p.id }}/delete">删除</a>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="muted">暂无产品，先点击右上角「新增产品」。</div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

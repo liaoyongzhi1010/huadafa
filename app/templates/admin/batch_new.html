@@ -1,0 +1,44 @@
+{% extends "admin/base.html" %}
+{% block title %}新增批次{% endblock %}
+{% block topbar_title %}新增批次{% endblock %}
+{% block body %}
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">新增批次</h1>
+        <div class="muted page-subtitle">产品：{{ product.name }}</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/admin/products/{{ product.id }}/batches">返回批次列表</a>
+      </div>
+    </div>
+
+    <div class="card">
+      {% if notice_message %}
+        <div class="alert alert-danger" style="margin-bottom:12px;">{{ notice_message }}</div>
+      {% endif %}
+      <form class="form" method="post" action="/admin/products/{{ product.id }}/batches/new">
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        <div class="form-row">
+          <div class="label">生产日期</div>
+          <input class="input" name="production_date" value="{{ today }}" />
+        </div>
+        <div class="form-row">
+          <div class="label">数量（创建后自动生成防伪码）</div>
+          <input class="input" name="quantity" required value="{{ quantity or '100' }}" />
+          <div class="muted" style="font-size:12px;">单次 1–10000；如需再次生产，请新建一个批次</div>
+        </div>
+        <div class="form-row">
+          <div class="label">备注</div>
+          <input class="input" name="note" placeholder="例如：第一批" />
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">创建批次</button>
+          <a class="btn" href="/admin/products/{{ product.id }}/batches">取消</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
