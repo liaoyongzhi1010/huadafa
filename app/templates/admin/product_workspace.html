@@ -14,7 +14,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">{{ product.name }}</h1>
-        <div class="muted page-subtitle">在一个页面里管理批次、推荐和固定内容</div>
+        <div class="muted page-subtitle">在一个页面里管理批次、页面与防伪设置</div>
       </div>
       <div class="actions">
         <a class="btn btn-ghost" href="/admin/products">返回产品列表</a>
@@ -33,9 +33,14 @@
         <div class="stat-hint">当前产品独立推荐位</div>
       </a>
       <a class="stat-card" href="/admin/products/{{ product.id }}/content" style="text-decoration:none;">
-        <div class="stat-label">固定内容</div>
-        <div class="stat-value">内容</div>
-        <div class="stat-hint">品牌溯源 / 关于我们（图文混排）</div>
+        <div class="stat-label">页面设置</div>
+        <div class="stat-value">页面</div>
+        <div class="stat-hint">产品信息 / 品牌溯源 / 关于我们（图文混排）</div>
+      </a>
+      <a class="stat-card" href="/admin/products/{{ product.id }}/verify-page-settings" style="text-decoration:none;">
+        <div class="stat-label">防伪设置</div>
+        <div class="stat-value">顶部</div>
+        <div class="stat-hint">顶部标识、标题与副标题</div>
       </a>
       <a class="stat-card" href="/verify/general?product_id={{ product.id }}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
         <div class="stat-label">页面预览</div>

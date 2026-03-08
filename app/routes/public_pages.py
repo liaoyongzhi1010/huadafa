@@ -35,6 +35,11 @@ _DEFAULT_VERIFY_SECTIONS: list[dict[str, str]] = [
     {"id": "brand_traceability", "title": "品牌溯源"},
     {"id": "about_us", "title": "关于我们"},
 ]
+_DEFAULT_BRAND_SETTINGS: dict[str, str] = {
+    "brand_mark": "爱酷",
+    "brand_name": "中国爱酷防伪中心",
+    "brand_sub": "AIKU CHINA VERIFICATION CENTER",
+}
 _SECTION_ID_RE = re.compile(r"^[a-z0-9_]{1,64}$")
 
 
@@ -113,6 +118,26 @@ def _normalize_blocks(payload: object) -> list[dict[str, str]]:
 
 def _verify_sections_storage_key(product_id: int) -> str:
     return f"product:{product_id}:verify_sections"
+
+
+def _verify_page_settings_storage_key(product_id: int) -> str:
+    return f"product:{product_id}:verify_page_settings"
+
+
+def _load_verify_page_branding_for_product(db: Session, *, product_id: int) -> dict[str, str]:
+    settings = dict(_DEFAULT_BRAND_SETTINGS)
+    row = db.execute(
+        select(PageContent).where(PageContent.key == _verify_page_settings_storage_key(product_id))
+    ).scalar_one_or_none()
+    if row is None or not isinstance(row.content_json, dict):
+        return settings
+
+    payload = row.content_json
+    for key in ("brand_mark", "brand_name", "brand_sub"):
+        value = str(payload.get(key, "")).strip()
+        if value:
+            settings[key] = value
+    return settings
 
 
 def _section_content_key(*, product_id: int, section_id: str) -> str:
@@ -234,10 +259,14 @@ def _generic_settings_storage_key(product_id: int) -> str:
 
 
 def _load_generic_settings_for_product(db: Session, *, product_id: int, cfg: dict[str, object]) -> dict[str, object]:
+    default_branding = _load_verify_page_branding_for_product(db, product_id=product_id)
     settings = {
         "generic_message": _generic_genuine_text(str(cfg["text_genuine"])),
         "show_product_name": bool(cfg["show_product_name"]),
         "show_batch_date": bool(cfg["show_batch_date"]),
+        "brand_mark": default_branding["brand_mark"],
+        "brand_name": default_branding["brand_name"],
+        "brand_sub": default_branding["brand_sub"],
     }
     row = db.execute(
         select(PageContent).where(PageContent.key == _generic_settings_storage_key(product_id))
@@ -253,6 +282,10 @@ def _load_generic_settings_for_product(db: Session, *, product_id: int, cfg: dic
     message = str(payload.get("generic_message", "")).strip()
     if message:
         settings["generic_message"] = message
+    for key in ("brand_mark", "brand_name", "brand_sub"):
+        value = str(payload.get(key, "")).strip()
+        if value:
+            settings[key] = value
     return settings
 
 
@@ -287,6 +320,7 @@ def verify_page(
     product: dict[str, object] | None = None
     production_date = ""
     query_status_text = ""
+    brand_settings = dict(_DEFAULT_BRAND_SETTINGS)
 
     visitor_id = request.cookies.get("visitor_id")
     set_cookie = False
@@ -296,6 +330,8 @@ def verify_page(
 
     if _CODE_RE.match(code):
         anti_code = db.execute(select(AntiCode).where(AntiCode.code == code)).scalar_one_or_none()
+        if anti_code is not None:
+            brand_settings = _load_verify_page_branding_for_product(db, product_id=anti_code.product_id)
         if anti_code is not None and anti_code.status == "active" and (
             anti_code.batch is None or anti_code.batch.status == "active"
         ):
@@ -387,6 +423,9 @@ def verify_page(
             "query_status_text": query_status_text,
             "preview_mode": preview_mode,
             "full_mode": full_mode,
+            "brand_mark": brand_settings["brand_mark"],
+            "brand_name": brand_settings["brand_name"],
+            "brand_sub": brand_settings["brand_sub"],
         },
     )
     if set_cookie:
@@ -416,6 +455,12 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
                 "show_batch_date": False,
                 "product_name": "",
                 "batch_date": "",
+                "verify_sections": [],
+                "recommendations": [],
+                "contact_us_url": str(cfg["contact_us_url"]),
+                "brand_mark": _DEFAULT_BRAND_SETTINGS["brand_mark"],
+                "brand_name": _DEFAULT_BRAND_SETTINGS["brand_name"],
+                "brand_sub": _DEFAULT_BRAND_SETTINGS["brand_sub"],
             },
         )
 
@@ -435,6 +480,23 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
     elif product.created_at is not None:
         batch_date = product.created_at.date().isoformat()
 
+    page_content = _load_page_content_for_product(db, product_id=product_id)
+    verify_sections = _load_verify_sections_payload(db, product=product, page_content=page_content)
+
+    recs = (
+        db.execute(
+            select(Recommendation)
+            .where(
+                Recommendation.image_url != "",
+                Recommendation.product_id == product_id,
+            )
+            .order_by(Recommendation.sort_order.asc(), Recommendation.id.asc())
+        )
+        .scalars()
+        .all()
+    )
+    recommendations = [{"image_url": r.image_url, "target_url": r.target_url} for r in recs]
+
     return templates.TemplateResponse(
         request,
         "verify_generic.html",
@@ -444,5 +506,11 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
             "show_batch_date": bool(generic_settings["show_batch_date"]),
             "product_name": product.name,
             "batch_date": batch_date,
+            "verify_sections": verify_sections,
+            "recommendations": recommendations,
+            "contact_us_url": str(cfg["contact_us_url"]),
+            "brand_mark": str(generic_settings["brand_mark"]),
+            "brand_name": str(generic_settings["brand_name"]),
+            "brand_sub": str(generic_settings["brand_sub"]),
         },
     )

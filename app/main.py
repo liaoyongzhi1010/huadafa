@@ -13,6 +13,8 @@ from app.routes.admin_content import router as admin_content_router
 from app.routes.admin_recommendations import router as admin_recommendations_router
 from app.routes.admin_exports import router as admin_exports_router
 from app.routes.admin_generic_settings import router as admin_generic_settings_router
+from app.routes.admin_verify_page_settings import router as admin_verify_page_settings_router
+from app.routes.admin_contact_settings import router as admin_contact_settings_router
 from app.routes.public_verify import router as public_router
 from app.routes.public_pages import router as public_pages_router
 
@@ -44,4 +46,6 @@ app.include_router(admin_config_router)
 app.include_router(admin_content_router)
 app.include_router(admin_recommendations_router)
 app.include_router(admin_generic_settings_router)
+app.include_router(admin_verify_page_settings_router)
+app.include_router(admin_contact_settings_router)
 app.include_router(admin_exports_router)

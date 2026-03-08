@@ -181,7 +181,7 @@ def test_admin_content_page_has_preview_buttons_and_link_hint(admin_client_and_s
 
     r = client.get(f"/admin/products/{product_id}/content")
     assert r.status_code == 200
-    assert "防伪页面设置" in r.text
+    assert "页面设置" in r.text
     assert "产品信息" in r.text
     assert "品牌溯源" in r.text
     assert "关于我们" in r.text

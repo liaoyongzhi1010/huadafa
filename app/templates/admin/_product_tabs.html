@@ -3,8 +3,10 @@
     <div style="font-weight:900;">{{ product.name }}</div>
     <div class="actions" style="margin-top:10px;">
       <a class="btn {% if active_tab == 'batches' %}btn-primary{% endif %}" href="/admin/products/{{ product.id }}/batches">批次</a>
-      <a class="btn {% if active_tab == 'content' or active_tab == 'recommendations' %}btn-primary{% endif %}" href="/admin/products/{{ product.id }}/content">防伪页面设置</a>
+      <a class="btn {% if active_tab == 'content' or active_tab == 'recommendations' %}btn-primary{% endif %}" href="/admin/products/{{ product.id }}/content">页面设置</a>
+      <a class="btn {% if active_tab == 'verify_page_settings' %}btn-primary{% endif %}" href="/admin/products/{{ product.id }}/verify-page-settings">防伪设置</a>
       <a class="btn {% if active_tab == 'generic_settings' %}btn-primary{% endif %}" href="/admin/products/{{ product.id }}/generic-settings">通用页设置</a>
+      <a class="btn {% if active_tab == 'contact_settings' %}btn-primary{% endif %}" href="/admin/products/{{ product.id }}/contact-settings">联系我们设置</a>
       <a class="btn btn-ghost" href="/admin/products" style="margin-left:auto;">返回产品列表</a>
     </div>
   </div>

@@ -159,6 +159,206 @@
       line-height: 1.45;
     }
 
+    .hr {
+      margin: 16px 0;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(226, 232, 240, 0), rgba(203, 213, 225, 0.95), rgba(226, 232, 240, 0));
+    }
+
+    .v-section-title {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 720;
+      color: #0f172a;
+      letter-spacing: 0.15px;
+    }
+
+    .pre { white-space: pre-wrap; }
+
+    .v-content-text {
+      display: block;
+      margin-top: 11px;
+      color: #111827;
+      font-size: 15.5px;
+      line-height: 2;
+      letter-spacing: 0.22px;
+      font-weight: 420;
+      text-decoration: none;
+      padding: 0;
+      background: transparent;
+      border: 0;
+    }
+
+    .v-content-text:not([href]) {
+      padding: 12px 14px 12px 15px;
+      border-radius: 14px;
+      border: 1px solid #dde5f0;
+      border-left: 3px solid #8fa2ba;
+      background: linear-gradient(160deg, #ffffff 0%, #f6f8fc 100%);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    .v-content-text[href] {
+      color: #0f4ca8;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .v-content-image-link,
+    .v-content-image-box {
+      display: block;
+      margin-top: 11px;
+      border-radius: 0;
+      overflow: hidden;
+      border: 1px solid #dbe3ee;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.09);
+    }
+
+    .v-content-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      border-radius: 0;
+      display: block;
+    }
+
+    .v-reco-wrap {
+      margin-top: 2px;
+    }
+
+    .v-reco-track {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-behavior: smooth;
+      border-radius: 0;
+    }
+
+    .v-reco-track::-webkit-scrollbar { display: none; }
+
+    .v-reco-item {
+      min-width: 100%;
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+    }
+
+    .v-reco {
+      display: block;
+      border-radius: 0;
+      overflow: hidden;
+      border: 1px solid #dbe3ee;
+      background: #fff;
+      text-decoration: none;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.11);
+    }
+
+    .v-reco img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      border-radius: 0;
+      display: block;
+    }
+
+    .v-reco-controls {
+      margin-top: 9px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .v-reco-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .v-reco-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      border: 0;
+      background: #cbd5e1;
+      opacity: 0.92;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .v-reco-dot.active {
+      width: 18px;
+      background: #334155;
+      opacity: 1;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 2px;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      border: 1px solid #d5dee9;
+      background: #fff;
+      color: #4b5563;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 650;
+      padding: 8px 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      border-color: rgba(200, 30, 30, 0.55);
+      background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+      box-shadow: 0 7px 16px rgba(200, 30, 30, 0.22);
+    }
+
+    .tab-panel {
+      margin-top: 12px;
+    }
+
+    .hidden { display: none; }
+
+    .v-bottom {
+      margin-top: 12px;
+    }
+
+    .btn {
+      display: inline-block;
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 14px;
+      text-decoration: none;
+      text-align: center;
+      background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+      color: #fff;
+      font-size: 15px;
+      font-weight: 680;
+      letter-spacing: 0.2px;
+      border: 1px solid rgba(200, 30, 30, 0.45);
+      padding: 12px 14px;
+      box-shadow: 0 10px 20px rgba(143, 16, 16, 0.22);
+    }
+
+    .btn:active { transform: translateY(1px); }
+
     @media (max-width: 390px) {
       .v-brand-name { font-size: 17px; }
       .v-card { padding: 14px; border-radius: 16px; }
@@ -171,10 +371,10 @@
     <div class="v-hero">
       <div class="container">
         <div class="v-brand">
-          <div class="v-mark">爱酷</div>
+          <div class="v-mark">{{ brand_mark }}</div>
           <div>
-            <div class="v-brand-name">爱酷，中国爱酷</div>
-            <div class="v-brand-sub">AIKU CHINA</div>
+            <div class="v-brand-name">{{ brand_name }}</div>
+            <div class="v-brand-sub">{{ brand_sub }}</div>
           </div>
         </div>
       </div>
@@ -203,7 +403,220 @@
             {% endif %}
           </div>
         {% endif %}
+
+        {% if verify_sections and verify_sections|length > 0 %}
+          <div class="hr"></div>
+          <div class="tabs" role="tablist" aria-label="tabs">
+            {% for section in verify_sections %}
+              <button type="button" class="tab-btn{% if loop.first %} active{% endif %}" data-tab="{{ section.id }}">{{ section.title }}</button>
+            {% endfor %}
+          </div>
+
+          {% for section in verify_sections %}
+            <div
+              id="tab-{{ section.id }}"
+              data-section-id="{{ section.id }}"
+              class="tab-panel{% if not loop.first %} hidden{% endif %}"
+            >
+              {% if section.blocks and section.blocks|length > 0 %}
+                {% for block in section.blocks %}
+                  {% if block.type == "text" %}
+                    {% if block.link %}
+                      <a class="v-content-text pre" href="{{ block.link }}" target="_blank" rel="noopener noreferrer">{{ block.text }}</a>
+                    {% else %}
+                      <div class="v-content-text pre">{{ block.text }}</div>
+                    {% endif %}
+                  {% elif block.type == "image" %}
+                    {% if block.link %}
+                      <a class="v-content-image-link" href="{{ block.link }}" target="_blank" rel="noopener noreferrer">
+                        <img class="v-content-image" src="{{ block.url }}" alt="{{ section.title }}图片" />
+                      </a>
+                    {% else %}
+                      <div class="v-content-image-box">
+                        <img class="v-content-image" src="{{ block.url }}" alt="{{ section.title }}图片" />
+                      </div>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+                <div class="muted">暂无内容</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="hr"></div>
+        <div class="v-section-title">官方推荐</div>
+        {% if recommendations and recommendations|length > 0 %}
+          <div class="v-reco-wrap">
+            <div class="v-reco-track" id="vRecoTrack">
+              {% for r in recommendations %}
+                <div class="v-reco-item">
+                  {% if r.target_url %}
+                    <a class="v-reco" href="{{ r.target_url }}" aria-label="recommendation link">
+                      <img src="{{ r.image_url }}" alt="推荐" />
+                    </a>
+                  {% else %}
+                    <div class="v-reco">
+                      <img src="{{ r.image_url }}" alt="推荐" />
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+            {% if recommendations|length > 1 %}
+              <div class="v-reco-controls">
+                <div class="v-reco-dots" id="vRecoDots">
+                  {% for r in recommendations %}
+                    <button
+                      type="button"
+                      class="v-reco-dot{% if loop.index0 == 0 %} active{% endif %}"
+                      data-index="{{ loop.index0 }}"
+                      aria-label="推荐{{ loop.index }}"
+                    ></button>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="muted">暂无推荐</div>
+        {% endif %}
       </div>
+
+      {% if contact_us_url %}
+        <div class="v-bottom">
+          <a class="btn" href="{{ contact_us_url }}">联系我们</a>
+        </div>
+      {% endif %}
     </div>
   </div>
+
+  <script>
+    (function () {
+      function activateTab(tab) {
+        document.querySelectorAll(".tab-btn").forEach(function (b) {
+          b.classList.toggle("active", b.dataset.tab === tab);
+        });
+        document.querySelectorAll(".tab-panel[data-section-id]").forEach(function (el) {
+          el.classList.toggle("hidden", el.getAttribute("data-section-id") !== tab);
+        });
+      }
+
+      document.querySelectorAll(".tab-btn").forEach(function (b) {
+        b.addEventListener("click", function () { activateTab(b.dataset.tab); });
+      });
+
+      function initRecommendationCarousel() {
+        var track = document.getElementById("vRecoTrack");
+        if (!track) return;
+
+        var dotsRoot = document.getElementById("vRecoDots");
+        var dots = dotsRoot ? Array.prototype.slice.call(dotsRoot.querySelectorAll(".v-reco-dot")) : [];
+        var items = Array.prototype.slice.call(track.querySelectorAll(".v-reco-item"));
+        var autoTimer = null;
+        var rafTicking = false;
+        var lastManualAt = 0;
+        var AUTO_MS = 3200;
+        var MANUAL_PAUSE_MS = 9000;
+        var WINDOW_MS = 800;
+
+        if (items.length <= 1) return;
+
+        function clampIndex(v) {
+          if (v < 0) return 0;
+          if (v >= items.length) return items.length - 1;
+          return v;
+        }
+
+        function currentIndex() {
+          if (!items.length) return 0;
+          var w = track.clientWidth || 1;
+          return clampIndex(Math.round(track.scrollLeft / w));
+        }
+
+        function setActive(idx) {
+          dots.forEach(function (d, i) { d.classList.toggle("active", i === idx); });
+        }
+
+        function goTo(idx, smooth) {
+          idx = clampIndex(idx);
+          var w = track.clientWidth || 1;
+          track.scrollTo({ left: idx * w, behavior: smooth ? "smooth" : "auto" });
+          setActive(idx);
+        }
+
+        function shouldAutoNow() {
+          return Date.now() - lastManualAt >= MANUAL_PAUSE_MS;
+        }
+
+        function startAuto() {
+          stopAuto();
+          autoTimer = window.setInterval(function () {
+            if (!shouldAutoNow()) return;
+            var idx = currentIndex();
+            goTo((idx + 1) % items.length, true);
+          }, AUTO_MS);
+        }
+
+        function stopAuto() {
+          if (autoTimer) {
+            window.clearInterval(autoTimer);
+            autoTimer = null;
+          }
+        }
+
+        function markManual() {
+          lastManualAt = Date.now();
+        }
+
+        dots.forEach(function (dot) {
+          dot.addEventListener("click", function () {
+            var idx = Number(dot.getAttribute("data-index") || 0);
+            markManual();
+            goTo(idx, true);
+          });
+        });
+
+        var pointerDown = false;
+        track.addEventListener("pointerdown", function () { pointerDown = true; });
+        track.addEventListener("pointerup", function () {
+          if (pointerDown) {
+            pointerDown = false;
+            markManual();
+            window.setTimeout(function () { setActive(currentIndex()); }, WINDOW_MS);
+          }
+        });
+        track.addEventListener("pointercancel", function () { pointerDown = false; });
+
+        track.addEventListener("scroll", function () {
+          if (rafTicking) return;
+          rafTicking = true;
+          window.requestAnimationFrame(function () {
+            rafTicking = false;
+            setActive(currentIndex());
+          });
+        }, { passive: true });
+
+        window.addEventListener("resize", function () {
+          goTo(currentIndex(), false);
+        });
+
+        if (document.hidden) {
+          stopAuto();
+        } else {
+          startAuto();
+        }
+        document.addEventListener("visibilitychange", function () {
+          if (document.hidden) {
+            stopAuto();
+          } else {
+            startAuto();
+          }
+        });
+      }
+
+      initRecommendationCarousel();
+    })();
+  </script>
 {% endblock %}

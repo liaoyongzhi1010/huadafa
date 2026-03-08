@@ -74,7 +74,22 @@ def test_admin_config_changes_public_verify(admin_client_and_sessionmaker):
     r2 = client.get("/api/public/verify", params={"code": "3333444455556666"})
     assert r2.status_code == 200
     data = r2.json()
-    assert data["show_code"] is False
+    assert data["show_code"] is True
     assert data["warning_threshold"] == 7
-    assert data["contact_us_url"] == "https://example.com/contact"
+    assert data["contact_us_url"] == ""
 
+
+def test_admin_config_page_hides_removed_fields(admin_client_and_sessionmaker):
+    client, _ = admin_client_and_sessionmaker
+
+    r = client.get("/admin/config")
+    assert r.status_code == 200
+    assert "显示防伪码" not in r.text
+    assert "通用二维码页显示产品名称" not in r.text
+    assert "通用二维码页显示生产日期" not in r.text
+    assert "联系我们跳转 URL" not in r.text
+    assert "正品提示文案" not in r.text
+    assert "未查到文案" not in r.text
+    assert "警示阈值（次数）" in r.text
+    assert "展示最近验证条数" in r.text
+    assert "警示文案" in r.text

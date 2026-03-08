@@ -29,6 +29,11 @@ _BUILTIN_TITLE_TO_ID = {
     "品牌溯源": "brand_traceability",
     "关于我们": "about_us",
 }
+_DEFAULT_VERIFY_PAGE_SETTINGS: dict[str, str] = {
+    "brand_mark": "爱酷",
+    "brand_name": "中国爱酷防伪中心",
+    "brand_sub": "AIKU CHINA VERIFICATION CENTER",
+}
 
 
 def _require_admin(request: Request):
@@ -43,6 +48,10 @@ def _content_storage_key(*, product_id: int, key: str) -> str:
 
 def _verify_sections_storage_key(*, product_id: int) -> str:
     return _content_storage_key(product_id=product_id, key="verify_sections")
+
+
+def _verify_page_settings_storage_key(*, product_id: int) -> str:
+    return _content_storage_key(product_id=product_id, key="verify_page_settings")
 
 
 def _section_content_key(*, section_id: str) -> str:
@@ -142,6 +151,39 @@ def _save_verify_sections(db: Session, *, product_id: int, sections: list[dict[s
         pc = PageContent(key=storage_key, content_json=payload)
     else:
         pc.content_json = payload
+    db.add(pc)
+
+
+def _load_verify_page_settings(db: Session, *, product_id: int) -> dict[str, str]:
+    settings = dict(_DEFAULT_VERIFY_PAGE_SETTINGS)
+    storage_key = _verify_page_settings_storage_key(product_id=product_id)
+    pc = db.execute(select(PageContent).where(PageContent.key == storage_key)).scalar_one_or_none()
+    if pc is None or not isinstance(pc.content_json, dict):
+        return settings
+
+    payload = pc.content_json
+    for key in ("brand_mark", "brand_name", "brand_sub"):
+        value = str(payload.get(key, "")).strip()
+        if value:
+            settings[key] = value
+    return settings
+
+
+def _save_verify_page_settings(db: Session, *, product_id: int, settings: dict[str, str]) -> None:
+    payload = {
+        "brand_mark": str(settings.get("brand_mark", "")).strip() or _DEFAULT_VERIFY_PAGE_SETTINGS["brand_mark"],
+        "brand_name": str(settings.get("brand_name", "")).strip() or _DEFAULT_VERIFY_PAGE_SETTINGS["brand_name"],
+        "brand_sub": str(settings.get("brand_sub", "")).strip() or _DEFAULT_VERIFY_PAGE_SETTINGS["brand_sub"],
+    }
+    storage_key = _verify_page_settings_storage_key(product_id=product_id)
+    pc = db.execute(select(PageContent).where(PageContent.key == storage_key)).scalar_one_or_none()
+    if pc is None:
+        pc = PageContent(key=storage_key, content_json=payload)
+    else:
+        existing = pc.content_json if isinstance(pc.content_json, dict) else {}
+        merged = dict(existing)
+        merged.update(payload)
+        pc.content_json = merged
     db.add(pc)
 
 
@@ -350,6 +392,7 @@ def _render_content_edit_page(request: Request, *, product: Product, db: Session
     active_section_id = _pick_active_section_id(sections, active_section_id)
     active_section = next((s for s in sections if s["id"] == active_section_id), sections[0])
     active_content = _get_section_content(db, product=product, section_id=active_section_id)
+    verify_page_settings = _load_verify_page_settings(db, product_id=product.id)
     preview_code = _pick_random_active_code_for_product(db, product_id=product.id)
     preview_verify_url = f"/verify?code={preview_code}&preview=1" if preview_code else ""
 
@@ -364,6 +407,9 @@ def _render_content_edit_page(request: Request, *, product: Product, db: Session
             "active_section_title": active_section["title"],
             "active_blocks": active_content["blocks"],
             "preview_verify_url": preview_verify_url,
+            "verify_brand_mark": verify_page_settings["brand_mark"],
+            "verify_brand_name": verify_page_settings["brand_name"],
+            "verify_brand_sub": verify_page_settings["brand_sub"],
         },
     )
 
@@ -396,6 +442,9 @@ def product_content_submit(
     action: str = Form("legacy"),
     active_section_id: str = Form(""),
     section_blocks_json: str = Form(""),
+    brand_mark: str = Form(""),
+    brand_name: str = Form(""),
+    brand_sub: str = Form(""),
     new_section_title: str = Form(""),
     delete_section_id: str = Form(""),
     section_images: list[UploadFile] = File(default_factory=list),
@@ -419,6 +468,23 @@ def product_content_submit(
         return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
 
     sections = _load_verify_sections(db, product_id=product_id)
+
+    if action == "save_page_settings":
+        _save_verify_page_settings(
+            db,
+            product_id=product_id,
+            settings={
+                "brand_mark": brand_mark,
+                "brand_name": brand_name,
+                "brand_sub": brand_sub,
+            },
+        )
+        db.commit()
+        fallback_id = _pick_active_section_id(sections, active_section_id)
+        return RedirectResponse(
+            url=f"/admin/products/{product_id}/content?section={fallback_id}",
+            status_code=HTTP_303_SEE_OTHER,
+        )
 
     if action == "add_section":
         current_id = _pick_active_section_id(sections, active_section_id)

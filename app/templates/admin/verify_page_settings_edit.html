@@ -1,6 +1,6 @@
 {% extends "admin/base.html" %}
-{% block title %}通用页设置{% endblock %}
-{% block topbar_title %}通用页设置{% endblock %}
+{% block title %}防伪设置{% endblock %}
+{% block topbar_title %}防伪设置{% endblock %}
 {% block body %}
   <style>
     .editor-layout {
@@ -58,31 +58,29 @@
     {% include "admin/_product_tabs.html" %}
     <div class="page-header">
       <div>
-        <h1 class="page-title">通用页设置</h1>
+        <h1 class="page-title">防伪设置</h1>
         <div class="muted page-subtitle">产品：{{ product.name }}（左侧设置，右侧手机整页预览）</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/admin/products/{{ product.id }}/content">去页面设置</a>
       </div>
     </div>
 
     <div class="editor-layout">
       <div>
         <div class="card">
-          <form class="form" method="post" action="/admin/products/{{ product.id }}/generic-settings">
+          <form class="form" method="post" action="/admin/products/{{ product.id }}/verify-page-settings">
             <div class="form-row">
               <div class="label">顶部左侧标识</div>
-              <input class="input" name="brand_mark" value="{{ brand_mark }}" placeholder="例如：爱酷" />
+              <input class="input" name="brand_mark" value="{{ brand_mark or '爱酷' }}" placeholder="例如：爱酷" />
             </div>
             <div class="form-row">
               <div class="label">顶部标题</div>
-              <input class="input" name="brand_name" value="{{ brand_name }}" placeholder="例如：中国爱酷防伪中心" />
+              <input class="input" name="brand_name" value="{{ brand_name or '中国爱酷防伪中心' }}" placeholder="例如：中国爱酷防伪中心" />
             </div>
             <div class="form-row">
               <div class="label">顶部副标题</div>
-              <input class="input" name="brand_sub" value="{{ brand_sub }}" placeholder="例如：AIKU CHINA VERIFICATION CENTER" />
-            </div>
-            <div class="form-row">
-              <div class="label">主标题文案</div>
-              <input class="input" name="generic_message" value="{{ generic_message }}" placeholder="例如：官方正品" />
-              <div class="muted" style="font-size:12px;">展示在顶部副标题下方，建议简短，避免超过一行。</div>
+              <input class="input" name="brand_sub" value="{{ brand_sub or 'AIKU CHINA VERIFICATION CENTER' }}" placeholder="例如：AIKU CHINA VERIFICATION CENTER" />
             </div>
             <div class="actions">
               <button class="btn btn-primary" type="submit">保存</button>
@@ -94,11 +92,18 @@
       <aside>
         <div class="preview-panel">
           <div class="card">
-            <div class="phone-title">手机整页预览：通用页</div>
-            <div class="phone-note">完整手机页面渲染，展示当前产品通用二维码落地页。</div>
+            <div class="phone-title">手机整页预览：防伪页</div>
+            <div class="phone-note">完整手机页面渲染，展示扫码后的防伪查询页面。</div>
             <div class="phone-shell">
-              <iframe src="/verify/general?product_id={{ product.id }}" title="通用页预览" loading="lazy"></iframe>
+              {% if preview_url %}
+                <iframe src="{{ preview_url }}" title="防伪页预览" loading="lazy"></iframe>
+              {% else %}
+                <div style="height:100%; display:flex; align-items:center; justify-content:center; padding:16px; text-align:center; color: var(--muted); font-size:13px; line-height:1.6;">暂无可用防伪码<br/>请先新建批次后预览</div>
+              {% endif %}
             </div>
+            {% if not preview_url %}
+              <div class="alert" style="margin-top:10px; margin-bottom:10px;">暂无可用防伪码，先新建批次后可预览完整防伪页。</div>
+            {% endif %}
           </div>
         </div>
       </aside>

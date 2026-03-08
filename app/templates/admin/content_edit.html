@@ -1,6 +1,6 @@
 {% extends "admin/base.html" %}
-{% block title %}防伪页面设置{% endblock %}
-{% block topbar_title %}防伪页面设置{% endblock %}
+{% block title %}页面设置{% endblock %}
+{% block topbar_title %}页面设置{% endblock %}
 {% block body %}
   <style>
     .editor-layout {
@@ -186,8 +186,8 @@
     {% include "admin/_product_tabs.html" %}
     <div class="page-header">
       <div>
-        <h1 class="page-title">防伪页面设置</h1>
-        <div class="muted page-subtitle">产品：{{ product.name }}（左侧编辑，右侧手机整页预览）</div>
+        <h1 class="page-title">页面设置</h1>
+        <div class="muted page-subtitle">产品：{{ product.name }}（左侧设置，右侧手机整页预览）</div>
       </div>
       <div class="actions">
         <a class="btn" href="/admin/products/{{ product.id }}/recommendations/new">去商品推荐设置</a>
@@ -309,12 +309,15 @@
           <div class="card">
             <div class="phone-title">手机整页预览：防伪页</div>
             <div class="phone-note">完整手机页面渲染，展示扫码后的防伪查询页面。</div>
-            {% if preview_verify_url %}
-              <div class="phone-shell">
+            <div class="phone-shell">
+              {% if preview_verify_url %}
                 <iframe src="{{ preview_verify_url }}" title="防伪页预览" loading="lazy"></iframe>
-              </div>
-            {% else %}
-              <div class="alert" style="margin-bottom:10px;">暂无可用防伪码，先新建批次后可预览完整防伪页。</div>
+              {% else %}
+                <div style="height:100%; display:flex; align-items:center; justify-content:center; padding:16px; text-align:center; color: var(--muted); font-size:13px; line-height:1.6;">暂无可用防伪码<br/>请先新建批次后预览</div>
+              {% endif %}
+            </div>
+            {% if not preview_verify_url %}
+              <div class="alert" style="margin-top:10px; margin-bottom:10px;">暂无可用防伪码，先新建批次后可预览完整防伪页。</div>
               <a class="btn" href="/admin/products/{{ product.id }}/batches/new">去新建批次</a>
             {% endif %}
           </div>

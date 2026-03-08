@@ -65,17 +65,23 @@ def test_batches_list_has_no_generate_column(admin_client_and_sessionmaker):
     assert "/codes/generate" not in r.text
     assert f"/admin/batches/{batch_id}/export/csv" in r.text
     assert f"/admin/products/{product_id}/export/generic-qrcode.png" in r.text
-    assert "防伪页面设置" in r.text
+    assert "页面设置" in r.text
     assert f'href="/admin/products/{product_id}/content"' in r.text
     assert "商品推荐" not in r.text
     assert f'href="/admin/products/{product_id}/generic-settings"' in r.text
     assert "通用页设置" in r.text
+    assert f'href="/admin/products/{product_id}/verify-page-settings"' in r.text
+    assert "防伪设置" in r.text
+    assert f'href="/admin/products/{product_id}/contact-settings"' in r.text
+    assert "联系我们设置" in r.text
     assert "预览防伪页" not in r.text
     assert "预览通用页" not in r.text
     assert "新建批次" not in r.text
     assert (
         r.text.index("批次")
-        < r.text.index("防伪页面设置")
+        < r.text.index("页面设置")
+        < r.text.index("防伪设置")
         < r.text.index("通用页设置")
+        < r.text.index("联系我们设置")
         < r.text.index("返回产品列表")
     )

@@ -71,6 +71,14 @@ def test_verify_page_shows_genuine_message(client_and_sessionmaker):
         product.detail_images = [{"url": "/uploads/products/1/x.png"}, {"url": "/uploads/products/1/y.png"}]
         db.add_all(
             [
+                PageContent(
+                    key=f"product:{product.id}:verify_page_settings",
+                    content_json={
+                        "brand_mark": "测标",
+                        "brand_name": "中国爱酷防伪中心",
+                        "brand_sub": "AIKU CHINA VERIFICATION CENTER",
+                    },
+                ),
                 PageContent(key="brand_traceability", content_json={"text": "品牌溯源内容"}),
                 PageContent(key="about_us", content_json={"text": "关于我们内容"}),
             ]
@@ -90,6 +98,9 @@ def test_verify_page_shows_genuine_message(client_and_sessionmaker):
     assert r.text.index("产品信息") < r.text.index("官方推荐")
     assert "品牌溯源内容" in r.text
     assert "关于我们内容" in r.text
+    assert "测标" in r.text
+    assert "中国爱酷防伪中心" in r.text
+    assert "爱酷，中国爱酷防伪中心" not in r.text
 
 
 def test_verify_page_optional_links_render_conditionally(client_and_sessionmaker):
@@ -176,6 +187,10 @@ def test_verify_page_recommendations_support_swipe_carousel(client_and_sessionma
     assert "https://img.example/reco-2.png" in r.text
     assert "v-reco-track" in r.text
     assert "v-reco-dots" in r.text
+    assert "aspect-ratio: 3 / 2;" not in r.text
+    assert "object-fit: cover;" not in r.text
+    assert re.search(r"\.v-content-image-link,\s*\.v-content-image-box\s*\{[^}]*border-radius:\s*0;", r.text)
+    assert re.search(r"\.v-reco\s*\{[^}]*border-radius:\s*0;", r.text)
 
 
 def test_verify_page_multi_scan_shows_queried_text(client_and_sessionmaker):
@@ -297,7 +312,11 @@ def test_verify_generic_page_shows_product_and_batch_info(client_and_sessionmake
     client, SessionLocal = client_and_sessionmaker
 
     with SessionLocal() as db:
-        product = Product(name="IMCO 6700", detail_text="", detail_images=[])
+        product = Product(
+            name="IMCO 6700",
+            detail_text="通用页产品详情文案",
+            detail_images=[{"url": "/uploads/products/generic/info.png"}],
+        )
         db.add(product)
         db.commit()
         db.refresh(product)
@@ -319,6 +338,29 @@ def test_verify_generic_page_shows_product_and_batch_info(client_and_sessionmake
                 text_warning="此防伪码已被多次验证，请您留意！",
             )
         )
+        db.add_all(
+            [
+                PageContent(
+                    key=f"product:{product_id}:generic_settings",
+                    content_json={
+                        "show_product_name": True,
+                        "show_batch_date": True,
+                        "generic_message": "官方正品",
+                        "brand_mark": "测标通用",
+                        "brand_name": "中国爱酷防伪中心",
+                        "brand_sub": "AIKU CHINA VERIFICATION CENTER",
+                    },
+                ),
+                PageContent(
+                    key=f"product:{product_id}:brand_traceability",
+                    content_json={"blocks": [{"type": "text", "text": "通用页品牌溯源内容"}]},
+                ),
+                PageContent(
+                    key=f"product:{product_id}:about_us",
+                    content_json={"blocks": [{"type": "text", "text": "通用页关于我们内容"}]},
+                ),
+            ]
+        )
         db.commit()
 
     r = client.get("/verify/general", params={"product_id": str(product_id)})
@@ -330,7 +372,62 @@ def test_verify_generic_page_shows_product_and_batch_info(client_and_sessionmake
     assert "2026-02-27" in r.text
     assert "此防伪码已验证" not in r.text
     assert "最近验证时间" not in r.text
-    assert "官方推荐" not in r.text
+    assert "产品信息" in r.text
+    assert "通用页产品详情文案" in r.text
+    assert "/uploads/products/generic/info.png" in r.text
+    assert "品牌溯源" in r.text
+    assert "通用页品牌溯源内容" in r.text
+    assert "关于我们" in r.text
+    assert "通用页关于我们内容" in r.text
+    assert "官方推荐" in r.text
+    assert "暂无推荐" in r.text
+    assert "测标通用" in r.text
+    assert "中国爱酷防伪中心" in r.text
+    assert "爱酷，中国爱酷防伪中心" not in r.text
+    assert "爱酷，中国爱酷" not in r.text
+
+
+def test_verify_generic_page_shows_recommendations_when_configured(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="GEN-RECO", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+        batch = Batch(product_id=product.id, production_date=date(2026, 2, 28), note="")
+        db.add(batch)
+        db.commit()
+
+        db.add_all(
+            [
+                Recommendation(
+                    product_id=product_id,
+                    image_url="https://img.example/generic-reco-1.png",
+                    target_url="https://example.com/generic-reco-1",
+                    enabled=True,
+                    sort_order=20,
+                ),
+                Recommendation(
+                    product_id=product_id,
+                    image_url="https://img.example/generic-reco-2.png",
+                    target_url="",
+                    enabled=True,
+                    sort_order=10,
+                ),
+            ]
+        )
+        db.commit()
+
+    r = client.get("/verify/general", params={"product_id": str(product_id)})
+    assert r.status_code == 200
+    assert "官方推荐" in r.text
+    assert "https://img.example/generic-reco-1.png" in r.text
+    assert "https://img.example/generic-reco-2.png" in r.text
+    assert "v-reco-track" in r.text
+    assert "v-reco-dots" in r.text
 
 
 def test_verify_generic_page_respects_display_switches(client_and_sessionmaker):

@@ -43,14 +43,8 @@ def config_page(request: Request, db: Session = Depends(get_db)):
 @router.post("/config")
 def config_submit(
     request: Request,
-    show_code: str | None = Form(None),
-    show_product_name: str | None = Form(None),
-    show_batch_date: str | None = Form(None),
     warning_threshold: str = Form("5"),
     recent_events_limit: str = Form("5"),
-    contact_us_url: str = Form(""),
-    text_genuine: str = Form("官方正品防伪码"),
-    text_not_found: str = Form("未查询到该防伪码"),
     text_warning: str = Form("此防伪码已被多次验证，请您留意！"),
     db: Session = Depends(get_db),
 ):
@@ -60,9 +54,6 @@ def config_submit(
 
     cfg = _get_or_create_config(db)
 
-    cfg.show_code = show_code is not None
-    cfg.show_product_name = show_product_name is not None
-    cfg.show_batch_date = show_batch_date is not None
     try:
         cfg.warning_threshold = max(1, int(warning_threshold))
     except ValueError:
@@ -72,9 +63,6 @@ def config_submit(
     except ValueError:
         cfg.recent_events_limit = 5
 
-    cfg.contact_us_url = contact_us_url.strip()
-    cfg.text_genuine = text_genuine.strip() or cfg.text_genuine
-    cfg.text_not_found = text_not_found.strip() or cfg.text_not_found
     cfg.text_warning = text_warning.strip() or cfg.text_warning
 
     db.add(cfg)

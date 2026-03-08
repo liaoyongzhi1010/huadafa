@@ -1,6 +1,6 @@
 {% extends "admin/base.html" %}
-{% block title %}通用页设置{% endblock %}
-{% block topbar_title %}通用页设置{% endblock %}
+{% block title %}联系我们设置{% endblock %}
+{% block topbar_title %}联系我们设置{% endblock %}
 {% block body %}
   <style>
     .editor-layout {
@@ -58,7 +58,7 @@
     {% include "admin/_product_tabs.html" %}
     <div class="page-header">
       <div>
-        <h1 class="page-title">通用页设置</h1>
+        <h1 class="page-title">联系我们设置</h1>
         <div class="muted page-subtitle">产品：{{ product.name }}（左侧设置，右侧手机整页预览）</div>
       </div>
     </div>
@@ -66,23 +66,10 @@
     <div class="editor-layout">
       <div>
         <div class="card">
-          <form class="form" method="post" action="/admin/products/{{ product.id }}/generic-settings">
+          <form class="form" method="post" action="/admin/products/{{ product.id }}/contact-settings">
             <div class="form-row">
-              <div class="label">顶部左侧标识</div>
-              <input class="input" name="brand_mark" value="{{ brand_mark }}" placeholder="例如：爱酷" />
-            </div>
-            <div class="form-row">
-              <div class="label">顶部标题</div>
-              <input class="input" name="brand_name" value="{{ brand_name }}" placeholder="例如：中国爱酷防伪中心" />
-            </div>
-            <div class="form-row">
-              <div class="label">顶部副标题</div>
-              <input class="input" name="brand_sub" value="{{ brand_sub }}" placeholder="例如：AIKU CHINA VERIFICATION CENTER" />
-            </div>
-            <div class="form-row">
-              <div class="label">主标题文案</div>
-              <input class="input" name="generic_message" value="{{ generic_message }}" placeholder="例如：官方正品" />
-              <div class="muted" style="font-size:12px;">展示在顶部副标题下方，建议简短，避免超过一行。</div>
+              <div class="label">联系我们链接</div>
+              <input class="input" name="contact_us_url" value="{{ contact_us_url or '' }}" placeholder="https://your-site.example/contact" />
             </div>
             <div class="actions">
               <button class="btn btn-primary" type="submit">保存</button>
@@ -94,11 +81,22 @@
       <aside>
         <div class="preview-panel">
           <div class="card">
-            <div class="phone-title">手机整页预览：通用页</div>
-            <div class="phone-note">完整手机页面渲染，展示当前产品通用二维码落地页。</div>
+            <div class="phone-title">手机整页预览：联系我们</div>
+            <div class="phone-note">预览“联系我们”按钮点击后的手机页面；若目标站点禁止 iframe，建议新窗口打开确认。</div>
             <div class="phone-shell">
-              <iframe src="/verify/general?product_id={{ product.id }}" title="通用页预览" loading="lazy"></iframe>
+              {% if contact_us_url %}
+                <iframe src="{{ contact_us_url }}" title="联系我们预览" loading="lazy"></iframe>
+              {% else %}
+                <div style="height:100%; display:flex; align-items:center; justify-content:center; padding:16px; text-align:center; color: var(--muted); font-size:13px; line-height:1.6;">暂无联系我们链接<br/>请先填写并保存后预览</div>
+              {% endif %}
             </div>
+            {% if not contact_us_url %}
+              <div class="alert" style="margin-top:10px; margin-bottom:10px;">暂无联系我们链接，先填写后可预览跳转页面。</div>
+            {% else %}
+              <div class="actions" style="margin-top:10px;">
+                <a class="btn" href="{{ contact_us_url }}" target="_blank" rel="noopener noreferrer">新窗口打开</a>
+              </div>
+            {% endif %}
           </div>
         </div>
       </aside>

@@ -14,6 +14,11 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 _DEFAULT_GENERIC_MESSAGE = "官方正品"
+_DEFAULT_BRAND_SETTINGS: dict[str, str] = {
+    "brand_mark": "爱酷",
+    "brand_name": "中国爱酷防伪中心",
+    "brand_sub": "AIKU CHINA VERIFICATION CENTER",
+}
 
 
 def _require_admin(request: Request):
@@ -34,18 +39,44 @@ def _generic_settings_storage_key(product_id: int) -> str:
     return f"product:{product_id}:generic_settings"
 
 
+def _verify_page_settings_storage_key(product_id: int) -> str:
+    return f"product:{product_id}:verify_page_settings"
+
+
+def _load_verify_page_brand_defaults(db: Session, *, product_id: int) -> dict[str, str]:
+    settings = dict(_DEFAULT_BRAND_SETTINGS)
+    row = db.execute(select(PageContent).where(PageContent.key == _verify_page_settings_storage_key(product_id))).scalar_one_or_none()
+    if row is None or not isinstance(row.content_json, dict):
+        return settings
+    payload = row.content_json
+    for key in ("brand_mark", "brand_name", "brand_sub"):
+        value = str(payload.get(key, "")).strip()
+        if value:
+            settings[key] = value
+    return settings
+
+
 def _generic_genuine_text(text_genuine: str) -> str:
     cleaned = text_genuine.replace("防伪码", "").strip()
     return cleaned or _DEFAULT_GENERIC_MESSAGE
 
 
 def _load_product_generic_settings(
-    db: Session, *, product_id: int, default_message: str, default_show_product_name: bool, default_show_batch_date: bool
+    db: Session,
+    *,
+    product_id: int,
+    default_message: str,
+    default_show_product_name: bool,
+    default_show_batch_date: bool,
+    default_brand_settings: dict[str, str],
 ) -> dict[str, object]:
     settings = {
         "show_product_name": default_show_product_name,
         "show_batch_date": default_show_batch_date,
         "generic_message": default_message,
+        "brand_mark": default_brand_settings["brand_mark"],
+        "brand_name": default_brand_settings["brand_name"],
+        "brand_sub": default_brand_settings["brand_sub"],
     }
     key = _generic_settings_storage_key(product_id)
     row = db.execute(select(PageContent).where(PageContent.key == key)).scalar_one_or_none()
@@ -60,6 +91,10 @@ def _load_product_generic_settings(
     msg = str(payload.get("generic_message", "")).strip()
     if msg:
         settings["generic_message"] = msg
+    for key in ("brand_mark", "brand_name", "brand_sub"):
+        value = str(payload.get(key, "")).strip()
+        if value:
+            settings[key] = value
     return settings
 
 
@@ -77,12 +112,14 @@ def product_generic_settings_page(request: Request, product_id: int, db: Session
     default_message = _generic_genuine_text(cfg.text_genuine if cfg is not None else _DEFAULT_GENERIC_MESSAGE)
     default_show_product_name = cfg.show_product_name if cfg is not None else True
     default_show_batch_date = cfg.show_batch_date if cfg is not None else True
+    default_brand_settings = _load_verify_page_brand_defaults(db, product_id=product_id)
     settings = _load_product_generic_settings(
         db,
         product_id=product_id,
         default_message=default_message,
         default_show_product_name=default_show_product_name,
         default_show_batch_date=default_show_batch_date,
+        default_brand_settings=default_brand_settings,
     )
 
     return templates.TemplateResponse(
@@ -94,6 +131,9 @@ def product_generic_settings_page(request: Request, product_id: int, db: Session
             "show_product_name": bool(settings["show_product_name"]),
             "show_batch_date": bool(settings["show_batch_date"]),
             "generic_message": str(settings["generic_message"]),
+            "brand_mark": str(settings["brand_mark"]),
+            "brand_name": str(settings["brand_name"]),
+            "brand_sub": str(settings["brand_sub"]),
         },
     )
 
@@ -105,6 +145,9 @@ def product_generic_settings_submit(
     show_product_name: str | None = Form(None),
     show_batch_date: str | None = Form(None),
     generic_message: str = Form(""),
+    brand_mark: str = Form(""),
+    brand_name: str = Form(""),
+    brand_sub: str = Form(""),
     db: Session = Depends(get_db),
 ):
     redirect = _require_admin(request)
@@ -117,18 +160,42 @@ def product_generic_settings_submit(
 
     cfg = _load_verify_config_or_none(db)
     default_message = _generic_genuine_text(cfg.text_genuine if cfg is not None else _DEFAULT_GENERIC_MESSAGE)
-    payload = {
-        "show_product_name": show_product_name is not None,
-        "show_batch_date": show_batch_date is not None,
-        "generic_message": generic_message.strip() or default_message,
-    }
-
+    default_brand_settings = _load_verify_page_brand_defaults(db, product_id=product_id)
     key = _generic_settings_storage_key(product_id)
     row = db.execute(select(PageContent).where(PageContent.key == key)).scalar_one_or_none()
+    existing = row.content_json if row is not None and isinstance(row.content_json, dict) else {}
+    default_show_product_name = cfg.show_product_name if cfg is not None else True
+    default_show_batch_date = cfg.show_batch_date if cfg is not None else True
+    preserved_show_product_name = bool(existing.get("show_product_name", default_show_product_name))
+    preserved_show_batch_date = bool(existing.get("show_batch_date", default_show_batch_date))
+
+    payload: dict[str, object] = {
+        "show_product_name": preserved_show_product_name,
+        "show_batch_date": preserved_show_batch_date,
+        "generic_message": generic_message.strip() or default_message,
+        "brand_mark": (
+            brand_mark.strip()
+            or str(existing.get("brand_mark", "")).strip()
+            or default_brand_settings["brand_mark"]
+        ),
+        "brand_name": (
+            brand_name.strip()
+            or str(existing.get("brand_name", "")).strip()
+            or default_brand_settings["brand_name"]
+        ),
+        "brand_sub": (
+            brand_sub.strip()
+            or str(existing.get("brand_sub", "")).strip()
+            or default_brand_settings["brand_sub"]
+        ),
+    }
+
     if row is None:
         row = PageContent(key=key, content_json=payload)
     else:
-        row.content_json = payload
+        merged = dict(existing)
+        merged.update(payload)
+        row.content_json = merged
     db.add(row)
     db.commit()
 
