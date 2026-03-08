@@ -14,6 +14,9 @@
     </div>
 
     <div class="card">
+      {% if notice_message %}
+        <div class="alert alert-danger" style="margin-bottom:12px;">{{ notice_message }}</div>
+      {% endif %}
       <form class="form" method="post" action="/admin/products/{{ product.id }}/batches/new">
         {% if error %}
           <div class="alert alert-danger">{{ error }}</div>

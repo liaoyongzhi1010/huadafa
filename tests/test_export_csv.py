@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import codecs
 from datetime import date
 
 import pytest
@@ -43,7 +44,7 @@ def test_export_batch_csv_contains_verify_urls(admin_client_and_sessionmaker):
     client, SessionLocal = admin_client_and_sessionmaker
 
     with SessionLocal() as db:
-        product = Product(name="P", detail_text="", detail_images=[])
+        product = Product(name="产品A", detail_text="", detail_images=[])
         db.add(product)
         db.commit()
         db.refresh(product)
@@ -66,8 +67,10 @@ def test_export_batch_csv_contains_verify_urls(admin_client_and_sessionmaker):
     r = client.get(f"/admin/batches/{batch_id}/export/csv")
     assert r.status_code == 200
     assert "text/csv" in r.headers.get("content-type", "")
-    body = r.text
+    assert r.content.startswith(codecs.BOM_UTF8)
+    body = r.content.decode("utf-8-sig")
+    assert "product_name,production_date,code,verify_url" in body
+    assert "产品A,2026-02-12,5555666677778888" in body
     assert "verify_url" in body
     assert "/verify?code=5555666677778888" in body
     assert "/verify?code=1111222233334444" in body
-

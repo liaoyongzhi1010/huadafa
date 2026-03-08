@@ -171,3 +171,94 @@ def test_verify_disabled_code_returns_410(client_and_sessionmaker):
     data = r.json()
     assert data["status"] == "disabled"
 
+
+def test_verify_recommendations_are_product_specific(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        p1 = Product(name="P1", detail_text="", detail_images=[])
+        p2 = Product(name="P2", detail_text="", detail_images=[])
+        db.add_all([p1, p2])
+        db.commit()
+        db.refresh(p1)
+        db.refresh(p2)
+
+        b1 = Batch(product_id=p1.id, production_date=date(2026, 2, 12), note="")
+        b2 = Batch(product_id=p2.id, production_date=date(2026, 2, 12), note="")
+        db.add_all([b1, b2])
+        db.commit()
+        db.refresh(b1)
+        db.refresh(b2)
+
+        db.add(AntiCode(code="1212121212121212", product_id=p1.id, batch_id=b1.id))
+        db.add(AntiCode(code="3434343434343434", product_id=p2.id, batch_id=b2.id))
+        db.add_all(
+            [
+                Recommendation(
+                    product_id=None,
+                    image_url="https://img.example/global.png",
+                    target_url="https://example.com/global",
+                    enabled=True,
+                    sort_order=99,
+                ),
+                Recommendation(
+                    product_id=p1.id,
+                    image_url="https://img.example/p1.png",
+                    target_url="https://example.com/p1",
+                    enabled=True,
+                    sort_order=10,
+                ),
+                Recommendation(
+                    product_id=p2.id,
+                    image_url="https://img.example/p2.png",
+                    target_url="https://example.com/p2",
+                    enabled=True,
+                    sort_order=10,
+                ),
+            ]
+        )
+        db.commit()
+
+    r = client.get("/api/public/verify", params={"code": "1212121212121212"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["recommendations"] == [
+        {"image_url": "https://img.example/p1.png", "target_url": "https://example.com/p1"}
+    ]
+
+
+def test_verify_page_content_is_product_specific(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        p1 = Product(name="PX1", detail_text="", detail_images=[])
+        p2 = Product(name="PX2", detail_text="", detail_images=[])
+        db.add_all([p1, p2])
+        db.commit()
+        db.refresh(p1)
+        db.refresh(p2)
+
+        b1 = Batch(product_id=p1.id, production_date=date(2026, 2, 12), note="")
+        b2 = Batch(product_id=p2.id, production_date=date(2026, 2, 12), note="")
+        db.add_all([b1, b2])
+        db.commit()
+        db.refresh(b1)
+        db.refresh(b2)
+
+        db.add(AntiCode(code="5656565656565656", product_id=p1.id, batch_id=b1.id))
+        db.add(AntiCode(code="7878787878787878", product_id=p2.id, batch_id=b2.id))
+        db.add_all(
+            [
+                PageContent(key=f"product:{p1.id}:brand_traceability", content_json={"text": "P1 品牌内容"}),
+                PageContent(key=f"product:{p1.id}:about_us", content_json={"text": "P1 关于我们"}),
+                PageContent(key=f"product:{p2.id}:brand_traceability", content_json={"text": "P2 品牌内容"}),
+                PageContent(key=f"product:{p2.id}:about_us", content_json={"text": "P2 关于我们"}),
+            ]
+        )
+        db.commit()
+
+    r = client.get("/api/public/verify", params={"code": "5656565656565656"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["page_content"]["brand_traceability"]["text"] == "P1 品牌内容"
+    assert data["page_content"]["about_us"]["text"] == "P1 关于我们"

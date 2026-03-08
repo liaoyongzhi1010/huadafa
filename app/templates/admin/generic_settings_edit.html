@@ -1,0 +1,107 @@
+{% extends "admin/base.html" %}
+{% block title %}通用页设置{% endblock %}
+{% block topbar_title %}通用页设置{% endblock %}
+{% block body %}
+  <style>
+    .editor-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 14px;
+      align-items: start;
+    }
+    .preview-panel {
+      position: sticky;
+      top: 84px;
+      display: grid;
+      gap: 12px;
+    }
+    .phone-title {
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .phone-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .phone-shell {
+      width: 100%;
+      max-width: 380px;
+      margin: 0 auto;
+      border: 10px solid #0f172a;
+      border-radius: 28px;
+      background: #fff;
+      overflow: hidden;
+      aspect-ratio: 390 / 844;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+    }
+    .phone-shell iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+
+    @media (max-width: 1160px) {
+      .editor-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .preview-panel {
+        position: static;
+      }
+    }
+  </style>
+
+  <div class="container">
+    {% include "admin/_product_tabs.html" %}
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">通用页设置</h1>
+        <div class="muted page-subtitle">产品：{{ product.name }}（左侧设置，右侧手机整页预览）</div>
+      </div>
+    </div>
+
+    <div class="editor-layout">
+      <div>
+        <div class="card">
+          <form class="form" method="post" action="/admin/products/{{ product.id }}/generic-settings">
+            <div class="form-row">
+              <label style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" name="show_product_name" {% if show_product_name %}checked{% endif %} />
+                <span style="font-weight:800;">显示产品名称</span>
+              </label>
+            </div>
+            <div class="form-row">
+              <label style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" name="show_batch_date" {% if show_batch_date %}checked{% endif %} />
+                <span style="font-weight:800;">显示生产日期</span>
+              </label>
+            </div>
+            <div class="form-row">
+              <div class="label">主标题文案</div>
+              <input class="input" name="generic_message" value="{{ generic_message }}" placeholder="例如：官方正品" />
+              <div class="muted" style="font-size:12px;">建议简短，避免超过一行。</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary" type="submit">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <aside>
+        <div class="preview-panel">
+          <div class="card">
+            <div class="phone-title">手机整页预览：通用页</div>
+            <div class="phone-note">完整手机页面渲染，展示当前产品通用二维码落地页。</div>
+            <div class="phone-shell">
+              <iframe src="/verify/general?product_id={{ product.id }}" title="通用页预览" loading="lazy"></iframe>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+{% endblock %}

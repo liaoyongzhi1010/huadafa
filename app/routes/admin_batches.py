@@ -134,7 +134,7 @@ def product_batches_list(request: Request, product_id: int, db: Session = Depend
     return templates.TemplateResponse(
         request,
         "admin/batches_list.html",
-        {"product": product, "batch_rows": batch_rows},
+        {"product": product, "batch_rows": batch_rows, "active_tab": "batches"},
     )
 
 
@@ -148,10 +148,21 @@ def product_batch_new_page(request: Request, product_id: int, db: Session = Depe
     if product is None:
         return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
 
+    notice = request.query_params.get("notice", "").strip().lower()
+    notice_message = ""
+    if notice == "preview_no_code":
+        notice_message = "当前产品没有可用防伪码，请先新建批次并生成防伪码。"
+
     return templates.TemplateResponse(
         request,
         "admin/batch_new.html",
-        {"product": product, "today": date.today().isoformat(), "quantity": "100", "error": ""},
+        {
+            "product": product,
+            "today": date.today().isoformat(),
+            "quantity": "100",
+            "error": "",
+            "notice_message": notice_message,
+        },
     )
 
 

@@ -22,6 +22,8 @@ def export_batch_codes_csv(*, db: Session, batch_id: int, base_url: str) -> str:
     )
 
     buf = StringIO()
+    # UTF-8 BOM improves Excel compatibility for Chinese product names.
+    buf.write("\ufeff")
     writer = csv.writer(buf)
     writer.writerow(["product_name", "production_date", "code", "verify_url"])
 
@@ -37,4 +39,3 @@ def export_batch_codes_csv(*, db: Session, batch_id: int, base_url: str) -> str:
         )
 
     return buf.getvalue()
-

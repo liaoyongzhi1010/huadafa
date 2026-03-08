@@ -16,6 +16,8 @@ class VerifyConfig(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     show_code: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    show_product_name: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    show_batch_date: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     warning_threshold: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
     recent_events_limit: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
 

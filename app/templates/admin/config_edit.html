@@ -16,6 +16,14 @@
           <input type="checkbox" name="show_code" {% if cfg.show_code %}checked{% endif %} />
           <span style="font-weight:800;">显示防伪码</span>
         </label>
+        <label style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+          <input type="checkbox" name="show_product_name" {% if cfg.show_product_name %}checked{% endif %} />
+          <span style="font-weight:800;">通用二维码页显示产品名称</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+          <input type="checkbox" name="show_batch_date" {% if cfg.show_batch_date %}checked{% endif %} />
+          <span style="font-weight:800;">通用二维码页显示生产日期</span>
+        </label>
 
         <div class="form-row">
           <div class="label">警示阈值（次数）</div>

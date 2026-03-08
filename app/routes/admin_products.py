@@ -28,6 +28,20 @@ def _is_delete_confirmed(confirm_text: str) -> bool:
     return t == "删除" or t.upper() == "DELETE"
 
 
+def _pick_random_active_code_for_product(db: Session, *, product_id: int) -> str | None:
+    return db.execute(
+        select(AntiCode.code)
+        .join(Batch, Batch.id == AntiCode.batch_id)
+        .where(
+            AntiCode.product_id == product_id,
+            AntiCode.status == "active",
+            Batch.status == "active",
+        )
+        .order_by(func.random())
+        .limit(1)
+    ).scalar_one_or_none()
+
+
 @router.get("/products")
 def products_list(request: Request, db: Session = Depends(get_db)):
     redirect = _require_admin(request)
@@ -36,6 +50,41 @@ def products_list(request: Request, db: Session = Depends(get_db)):
 
     products = db.execute(select(Product).order_by(desc(Product.id))).scalars().all()
     return templates.TemplateResponse(request, "admin/products_list.html", {"products": products})
+
+
+@router.get("/products/{product_id}/workspace")
+def product_workspace(request: Request, product_id: int, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/admin/products/{product_id}/batches", status_code=HTTP_303_SEE_OTHER)
+
+
+@router.get("/products/{product_id}/preview/verify")
+def product_preview_verify(request: Request, product_id: int, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    code = _pick_random_active_code_for_product(db, product_id=product_id)
+    if code is None:
+        return RedirectResponse(
+            url=f"/admin/products/{product_id}/batches/new?notice=preview_no_code",
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+    return RedirectResponse(
+        url=f"/verify?code={code}&preview=1",
+        status_code=HTTP_303_SEE_OTHER,
+    )
 
 
 @router.get("/products/new")

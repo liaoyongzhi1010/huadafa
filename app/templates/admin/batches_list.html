@@ -3,6 +3,7 @@
 {% block topbar_title %}产品 / 批次{% endblock %}
 {% block body %}
   <div class="container">
+    {% include "admin/_product_tabs.html" %}
     <div class="page-header">
       <div>
         <h1 class="page-title">批次</h1>
@@ -10,7 +11,7 @@
       </div>
       <div class="actions">
         <a class="btn btn-primary" href="/admin/products/{{ product.id }}/batches/new">新增批次</a>
-        <a class="btn btn-ghost" href="/admin/products">返回产品</a>
+        <a class="btn" href="/admin/products/{{ product.id }}/export/generic-qrcode.png">通用二维码</a>
       </div>
     </div>
 

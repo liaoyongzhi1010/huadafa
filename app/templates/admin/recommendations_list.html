@@ -3,13 +3,14 @@
 {% block topbar_title %}商品推荐{% endblock %}
 {% block body %}
   <div class="container">
+    {% include "admin/_product_tabs.html" %}
     <div class="page-header">
       <div>
         <h1 class="page-title">商品推荐</h1>
-        <div class="muted page-subtitle">有图才展示；按 sort 值从大到小优先</div>
+        <div class="muted page-subtitle">当前产品独立配置；按 sort 值从大到小优先</div>
       </div>
       <div class="actions">
-        <a class="btn btn-primary" href="/admin/recommendations/new">新增推荐</a>
+        <a class="btn btn-primary" href="/admin/products/{{ product.id }}/recommendations/new">新增推荐</a>
       </div>
     </div>
 
@@ -38,7 +39,7 @@
           </table>
         </div>
       {% else %}
-        <div class="muted">暂无推荐，点击右上角「新增推荐」。</div>
+        <div class="muted">当前产品暂无推荐，点击右上角「新增推荐」。</div>
       {% endif %}
     </div>
   </div>

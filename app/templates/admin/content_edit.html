@@ -1,30 +1,494 @@
 {% extends "admin/base.html" %}
-{% block title %}固定内容{% endblock %}
-{% block topbar_title %}固定内容{% endblock %}
+{% block title %}防伪页面设置{% endblock %}
+{% block topbar_title %}防伪页面设置{% endblock %}
 {% block body %}
+  <style>
+    .editor-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 14px;
+      align-items: start;
+    }
+    .preview-panel {
+      position: sticky;
+      top: 84px;
+      display: grid;
+      gap: 12px;
+    }
+    .phone-title {
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .phone-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .phone-shell {
+      width: 100%;
+      max-width: 380px;
+      margin: 0 auto;
+      border: 10px solid #0f172a;
+      border-radius: 28px;
+      background: #fff;
+      overflow: hidden;
+      aspect-ratio: 390 / 844;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+    }
+    .phone-shell iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+
+    .mix-editor {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .mix-toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mix-list { display: grid; gap: 10px; }
+    .mix-block {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      background: #fafafa;
+    }
+    .mix-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 900;
+    }
+    .mix-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .mix-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .mix-preview {
+      max-width: 280px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: block;
+    }
+    .link-hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .section-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 12px;
+      justify-content: space-between;
+    }
+    .section-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      flex: 1 1 auto;
+    }
+    .section-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 2px;
+      background: #f8fafc;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .section-chip.active {
+      border-color: var(--primary-100);
+      background: var(--primary-050);
+      box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.12);
+    }
+    .section-tab {
+      text-decoration: none;
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 13px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+    }
+    .section-chip.active .section-tab {
+      color: var(--primary-600);
+    }
+    .section-del {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: #64748b;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 13px;
+      line-height: 1;
+      margin-right: 2px;
+    }
+    .section-del:hover {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .section-reset {
+      border-style: dashed;
+      border-color: #cbd5e1;
+      background: #fff;
+      color: #334155;
+    }
+    .section-add-form {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 2px;
+    }
+
+    @media (max-width: 1160px) {
+      .editor-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .preview-panel {
+        position: static;
+      }
+    }
+  </style>
+
   <div class="container">
+    {% include "admin/_product_tabs.html" %}
     <div class="page-header">
       <div>
-        <h1 class="page-title">固定内容</h1>
-        <div class="muted page-subtitle">配置验证页的「品牌溯源 / 关于我们」</div>
+        <h1 class="page-title">防伪页面设置</h1>
+        <div class="muted page-subtitle">产品：{{ product.name }}（左侧编辑，右侧手机整页预览）</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/admin/products/{{ product.id }}/recommendations/new">去商品推荐设置</a>
       </div>
     </div>
 
-    <div class="card">
-      <form class="form" method="post" action="/admin/content">
-        <div class="form-row">
-          <div class="label">品牌溯源</div>
-          <textarea class="textarea" name="brand_text" rows="10">{{ brand_text }}</textarea>
+    <div class="editor-layout">
+      <div>
+        <div class="card">
+          <div class="section-bar">
+            <div class="section-tabs">
+              {% for section in sections %}
+                <div class="section-chip {% if active_section_id == section.id %}active{% endif %}">
+                  <a
+                    class="section-tab"
+                    href="/admin/products/{{ product.id }}/content?section={{ section.id }}"
+                  >{{ section.title }}</a>
+                  {% if sections|length > 1 %}
+                    <form method="post" action="/admin/products/{{ product.id }}/content" style="margin:0;" onsubmit="return confirm('确认删除这个栏目？');">
+                      <input type="hidden" name="action" value="delete_section" />
+                      <input type="hidden" name="delete_section_id" value="{{ section.id }}" />
+                      <input type="hidden" name="active_section_id" value="{{ active_section_id }}" />
+                      <button class="section-del" type="submit" title="删除栏目" aria-label="delete section">✕</button>
+                    </form>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+            <form method="post" action="/admin/products/{{ product.id }}/content" style="margin:0; flex:0 0 auto;">
+              <input type="hidden" name="action" value="restore_default_sections" />
+              <input type="hidden" name="active_section_id" value="{{ active_section_id }}" />
+              <button class="btn section-reset" type="submit">重置恢复默认模版</button>
+            </form>
+          </div>
+
+          <form class="section-add-form" method="post" action="/admin/products/{{ product.id }}/content">
+            <input type="hidden" name="action" value="add_section" />
+            <input type="hidden" name="active_section_id" value="{{ active_section_id }}" />
+            <input class="input" name="new_section_title" placeholder="新增栏目（例如：品牌故事）" style="max-width:280px;" />
+            <button class="btn" type="submit">新增栏目</button>
+          </form>
         </div>
-        <div class="form-row">
-          <div class="label">关于我们</div>
-          <textarea class="textarea" name="about_text" rows="10">{{ about_text }}</textarea>
+
+        <div class="card">
+          <div class="muted" style="margin-bottom:8px; font-size:12px;">当前编辑：{{ active_section_title }}</div>
+          <form class="form" method="post" action="/admin/products/{{ product.id }}/content" enctype="multipart/form-data" id="contentForm">
+            <input type="hidden" name="action" value="save_section" />
+            <input type="hidden" name="active_section_id" value="{{ active_section_id }}" />
+            <input type="hidden" name="section_blocks_json" id="section_blocks_json" value="" />
+
+            <div class="form-row">
+              <div class="mix-editor">
+                <div class="mix-toolbar">
+                  <button class="mix-btn js-add-text" type="button">+ 文字块</button>
+                  <button class="mix-btn js-add-image" type="button">+ 图片块</button>
+                </div>
+                <div class="mix-list js-block-list">
+                  {% if active_blocks and active_blocks|length > 0 %}
+                    {% for block in active_blocks %}
+                      {% if block.type == "text" %}
+                        <div class="mix-block" data-type="text">
+                          <div class="mix-head">
+                            <span>文字</span>
+                            <div class="mix-actions">
+                              <button class="mix-btn js-up" type="button">上移</button>
+                              <button class="mix-btn js-down" type="button">下移</button>
+                              <button class="mix-btn js-del" type="button">删除</button>
+                            </div>
+                          </div>
+                          <textarea class="textarea js-text" rows="4">{{ block.text }}</textarea>
+                          <input class="input js-link" placeholder="可选超链接（https://...）" value="{{ block.link or '' }}" />
+                          <div class="link-hint">点击上面文字可跳转；留空不跳转。</div>
+                        </div>
+                      {% elif block.type == "image" %}
+                        <div class="mix-block" data-type="image">
+                          <div class="mix-head">
+                            <span>图片</span>
+                            <div class="mix-actions">
+                              <button class="mix-btn js-up" type="button">上移</button>
+                              <button class="mix-btn js-down" type="button">下移</button>
+                              <button class="mix-btn js-del" type="button">删除</button>
+                            </div>
+                          </div>
+                          <img class="mix-preview" src="{{ block.url }}" alt="栏目图片" />
+                          <input class="js-image-url" type="hidden" value="{{ block.url }}" />
+                          <input class="input js-link" placeholder="可选超链接（https://...）" value="{{ block.link or '' }}" />
+                          <div class="link-hint">点击上面图片可跳转；留空不跳转。</div>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  {% else %}
+                    <div class="mix-block" data-type="text">
+                      <div class="mix-head">
+                        <span>文字</span>
+                        <div class="mix-actions">
+                          <button class="mix-btn js-up" type="button">上移</button>
+                          <button class="mix-btn js-down" type="button">下移</button>
+                          <button class="mix-btn js-del" type="button">删除</button>
+                        </div>
+                      </div>
+                      <textarea class="textarea js-text" rows="4"></textarea>
+                      <input class="input js-link" placeholder="可选超链接（https://...）" value="" />
+                      <div class="link-hint">点击上面文字可跳转；留空不跳转。</div>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-primary" type="submit">保存</button>
+            </div>
+          </form>
         </div>
-        <div class="actions">
-          <button class="btn btn-primary" type="submit">保存</button>
-          <a class="btn" href="/admin">返回仪表盘</a>
+      </div>
+
+      <aside>
+        <div class="preview-panel">
+          <div class="card">
+            <div class="phone-title">手机整页预览：防伪页</div>
+            <div class="phone-note">完整手机页面渲染，展示扫码后的防伪查询页面。</div>
+            {% if preview_verify_url %}
+              <div class="phone-shell">
+                <iframe src="{{ preview_verify_url }}" title="防伪页预览" loading="lazy"></iframe>
+              </div>
+            {% else %}
+              <div class="alert" style="margin-bottom:10px;">暂无可用防伪码，先新建批次后可预览完整防伪页。</div>
+              <a class="btn" href="/admin/products/{{ product.id }}/batches/new">去新建批次</a>
+            {% endif %}
+          </div>
         </div>
-      </form>
+      </aside>
     </div>
   </div>
+
+  <script>
+    (function () {
+      var currentSection = "{{ active_section_id }}";
+
+      function createBlock(type, data) {
+        var block = document.createElement("div");
+        block.className = "mix-block";
+        block.dataset.type = type;
+
+        var head = document.createElement("div");
+        head.className = "mix-head";
+        var title = document.createElement("span");
+        title.textContent = type === "text" ? "文字" : "图片";
+        head.appendChild(title);
+
+        var actions = document.createElement("div");
+        actions.className = "mix-actions";
+        ["上移", "下移", "删除"].forEach(function (label) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "mix-btn " + (label === "上移" ? "js-up" : label === "下移" ? "js-down" : "js-del");
+          btn.textContent = label;
+          actions.appendChild(btn);
+        });
+        head.appendChild(actions);
+        block.appendChild(head);
+
+        if (type === "text") {
+          var ta = document.createElement("textarea");
+          ta.className = "textarea js-text";
+          ta.rows = 4;
+          ta.value = data && data.text ? data.text : "";
+          block.appendChild(ta);
+
+          var textLink = document.createElement("input");
+          textLink.type = "text";
+          textLink.className = "input js-link";
+          textLink.placeholder = "可选超链接（https://...）";
+          textLink.value = data && data.link ? data.link : "";
+          block.appendChild(textLink);
+
+          var textHint = document.createElement("div");
+          textHint.className = "link-hint";
+          textHint.textContent = "点击上面文字可跳转；留空不跳转。";
+          block.appendChild(textHint);
+        } else {
+          if (data && data.url) {
+            var img = document.createElement("img");
+            img.className = "mix-preview";
+            img.src = data.url;
+            img.alt = "图片";
+            block.appendChild(img);
+
+            var hidden = document.createElement("input");
+            hidden.type = "hidden";
+            hidden.className = "js-image-url";
+            hidden.value = data.url;
+            block.appendChild(hidden);
+          } else {
+            var file = document.createElement("input");
+            file.type = "file";
+            file.className = "file js-image-file";
+            file.name = "section_images";
+            block.appendChild(file);
+          }
+
+          var imageLink = document.createElement("input");
+          imageLink.type = "text";
+          imageLink.className = "input js-link";
+          imageLink.placeholder = "可选超链接（https://...）";
+          imageLink.value = data && data.link ? data.link : "";
+          block.appendChild(imageLink);
+
+          var imageHint = document.createElement("div");
+          imageHint.className = "link-hint";
+          imageHint.textContent = "点击上面图片可跳转；留空不跳转。";
+          block.appendChild(imageHint);
+        }
+
+        return block;
+      }
+
+      function getList() {
+        return document.querySelector(".js-block-list");
+      }
+
+      function bindEvents(root) {
+        root.addEventListener("click", function (e) {
+          var t = e.target;
+          if (!(t instanceof HTMLElement)) return;
+          var block = t.closest(".mix-block");
+          if (!block) return;
+          var list = getList();
+
+          if (t.classList.contains("js-del")) {
+            block.remove();
+          } else if (t.classList.contains("js-up")) {
+            var prev = block.previousElementSibling;
+            if (prev) list.insertBefore(block, prev);
+          } else if (t.classList.contains("js-down")) {
+            var next = block.nextElementSibling;
+            if (next) list.insertBefore(next, block);
+          }
+        });
+
+        var addText = document.querySelector(".js-add-text");
+        var addImage = document.querySelector(".js-add-image");
+        if (addText) {
+          addText.addEventListener("click", function () {
+            getList().appendChild(createBlock("text"));
+          });
+        }
+        if (addImage) {
+          addImage.addEventListener("click", function () {
+            getList().appendChild(createBlock("image"));
+          });
+        }
+      }
+
+      function collectBlocks() {
+        var list = getList();
+        var blocks = [];
+        var uploadIndex = 0;
+        list.querySelectorAll(".mix-block").forEach(function (block) {
+          var type = block.dataset.type;
+          var linkInput = block.querySelector(".js-link");
+          var link = linkInput ? linkInput.value.trim() : "";
+          if (type === "text") {
+            var text = (block.querySelector(".js-text") || {}).value || "";
+            text = text.trim();
+            if (!text) return;
+            var item = { type: "text", text: text };
+            if (link) item.link = link;
+            blocks.push(item);
+            return;
+          }
+
+          if (type === "image") {
+            var url = (block.querySelector(".js-image-url") || {}).value || "";
+            url = url.trim();
+            if (url) {
+              var i1 = { type: "image", url: url };
+              if (link) i1.link = link;
+              blocks.push(i1);
+              return;
+            }
+            var file = block.querySelector(".js-image-file");
+            if (file && file.files && file.files.length > 0) {
+              var i2 = { type: "image_upload", upload_index: uploadIndex };
+              if (link) i2.link = link;
+              blocks.push(i2);
+              uploadIndex += 1;
+            }
+          }
+        });
+        return blocks;
+      }
+
+      var form = document.getElementById("contentForm");
+      if (form) {
+        bindEvents(form);
+        form.addEventListener("submit", function () {
+          var hidden = document.getElementById("section_blocks_json");
+          hidden.value = JSON.stringify(collectBlocks());
+        });
+      }
+    })();
+  </script>
 {% endblock %}

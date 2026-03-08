@@ -232,10 +232,10 @@
   <body class="{% if is_logged_in %}logged-in{% else %}logged-out{% endif %}">
     <div class="admin-shell">
       <aside class="sidebar">
-        <div class="brand">
+        <a href="/admin" class="brand" style="text-decoration:none;">
           <span class="brand-badge">✔</span>
           <span>防伪后台</span>
-        </div>
+        </a>
 
         {% if is_logged_in %}
           {% set path = request.url.path %}
@@ -243,8 +243,6 @@
             <a href="/admin" class="{% if path == '/admin' or path == '/admin/' %}active{% endif %}">仪表盘</a>
             <a href="/admin/products" class="{% if path.startswith('/admin/products') or path.startswith('/admin/batches') %}active{% endif %}">产品 / 批次</a>
             <a href="/admin/config" class="{% if path.startswith('/admin/config') %}active{% endif %}">验证页配置</a>
-            <a href="/admin/content" class="{% if path.startswith('/admin/content') %}active{% endif %}">固定内容</a>
-            <a href="/admin/recommendations" class="{% if path.startswith('/admin/recommendations') %}active{% endif %}">商品推荐</a>
             <a href="/admin/help" class="{% if path.startswith('/admin/help') %}active{% endif %}">使用文档</a>
           </nav>
         {% endif %}

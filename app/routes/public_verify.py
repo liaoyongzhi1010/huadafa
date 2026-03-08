@@ -7,7 +7,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from sqlalchemy import desc, or_, select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -26,6 +26,8 @@ _CODE_RE = re.compile(r"^\d{16}$")
 
 _DEFAULT_CONFIG: dict[str, object] = {
     "show_code": True,
+    "show_product_name": True,
+    "show_batch_date": True,
     "warning_threshold": 5,
     "recent_events_limit": 5,
     "contact_us_url": "",
@@ -35,12 +37,52 @@ _DEFAULT_CONFIG: dict[str, object] = {
 }
 
 
+def _content_keys_for_product(product_id: int) -> dict[str, str]:
+    return {
+        "brand_traceability": f"product:{product_id}:brand_traceability",
+        "about_us": f"product:{product_id}:about_us",
+    }
+
+
+def _load_page_content_for_product(db: Session, product_id: int) -> dict[str, object]:
+    keys = _content_keys_for_product(product_id)
+    rows = (
+        db.execute(
+            select(PageContent).where(
+                PageContent.key.in_(
+                    [
+                        keys["brand_traceability"],
+                        keys["about_us"],
+                        "brand_traceability",
+                        "about_us",
+                    ]
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    content_map: dict[str, object] = {c.key: c.content_json for c in rows}
+    return {
+        "brand_traceability": content_map.get(
+            keys["brand_traceability"],
+            content_map.get("brand_traceability", {}),
+        ),
+        "about_us": content_map.get(
+            keys["about_us"],
+            content_map.get("about_us", {}),
+        ),
+    }
+
+
 def _load_verify_config(db: Session) -> dict[str, object]:
     cfg = db.execute(select(VerifyConfig).order_by(desc(VerifyConfig.id))).scalar_one_or_none()
     if cfg is None:
         return dict(_DEFAULT_CONFIG)
     return {
         "show_code": cfg.show_code,
+        "show_product_name": cfg.show_product_name,
+        "show_batch_date": cfg.show_batch_date,
         "warning_threshold": cfg.warning_threshold,
         "recent_events_limit": cfg.recent_events_limit,
         "contact_us_url": cfg.contact_us_url,
@@ -88,25 +130,17 @@ def verify(code: str, db: Session = Depends(get_db)):
         .all()
     )
 
-    contents = (
-        db.execute(
-            select(PageContent).where(PageContent.key.in_(["brand_traceability", "about_us"]))
-        )
-        .scalars()
-        .all()
-    )
-    page_content: dict[str, object] = {c.key: c.content_json for c in contents}
+    loaded_page_content = _load_page_content_for_product(db, anti_code.product_id)
 
     product_id = anti_code.product_id
     recs = (
         db.execute(
             select(Recommendation)
             .where(
-                Recommendation.enabled.is_(True),
                 Recommendation.image_url != "",
-                or_(Recommendation.product_id.is_(None), Recommendation.product_id == product_id),
+                Recommendation.product_id == product_id,
             )
-            .order_by(desc(Recommendation.sort_order), desc(Recommendation.id))
+            .order_by(Recommendation.sort_order.asc(), Recommendation.id.asc())
         )
         .scalars()
         .all()
@@ -126,8 +160,8 @@ def verify(code: str, db: Session = Depends(get_db)):
             "detail_images": product.detail_images,
         },
         "page_content": {
-            "brand_traceability": page_content.get("brand_traceability", {}),
-            "about_us": page_content.get("about_us", {}),
+            "brand_traceability": loaded_page_content.get("brand_traceability", {}),
+            "about_us": loaded_page_content.get("about_us", {}),
         },
         "recommendations": [{"image_url": r.image_url, "target_url": r.target_url} for r in recs],
         "recent_events": recent_events,

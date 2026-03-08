@@ -7,7 +7,7 @@ import qrcode
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import AntiCode, Batch
+from app.models import AntiCode, Batch, Product
 
 
 def export_batch_qrcodes_zip(*, db: Session, batch_id: int, base_url: str) -> bytes:
@@ -32,3 +32,15 @@ def export_batch_qrcodes_zip(*, db: Session, batch_id: int, base_url: str) -> by
             zf.writestr(f"{code}.png", buf.getvalue())
     return out.getvalue()
 
+
+def export_product_generic_qrcode_png(*, db: Session, product_id: int, base_url: str) -> bytes:
+    product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
+    if product is None:
+        return b""
+
+    base_url = base_url.rstrip("/")
+    url = f"{base_url}/verify/general?product_id={product_id}"
+    img = qrcode.make(url)
+    out = BytesIO()
+    img.save(out, format="PNG")
+    return out.getvalue()

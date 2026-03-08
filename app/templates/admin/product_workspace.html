@@ -1,0 +1,52 @@
+{% extends "admin/base.html" %}
+{% block title %}产品工作台{% endblock %}
+{% block topbar_title %}产品工作台{% endblock %}
+{% block body %}
+  <div class="container">
+    {% if notice_message %}
+      <div class="alert alert-danger" style="margin-bottom:12px;">
+        {{ notice_message }}
+        <div class="actions" style="margin-top:10px;">
+          <a class="btn btn-primary" href="/admin/products/{{ product.id }}/batches/new">去新建批次</a>
+        </div>
+      </div>
+    {% endif %}
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ product.name }}</h1>
+        <div class="muted page-subtitle">在一个页面里管理批次、推荐和固定内容</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/admin/products">返回产品列表</a>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <a class="stat-card" href="/admin/products/{{ product.id }}/batches" style="text-decoration:none;">
+        <div class="stat-label">批次管理</div>
+        <div class="stat-value">批次</div>
+        <div class="stat-hint">生成防伪码、下载 CSV/二维码</div>
+      </a>
+      <a class="stat-card" href="/admin/products/{{ product.id }}/recommendations" style="text-decoration:none;">
+        <div class="stat-label">商品推荐</div>
+        <div class="stat-value">推荐</div>
+        <div class="stat-hint">当前产品独立推荐位</div>
+      </a>
+      <a class="stat-card" href="/admin/products/{{ product.id }}/content" style="text-decoration:none;">
+        <div class="stat-label">固定内容</div>
+        <div class="stat-value">内容</div>
+        <div class="stat-hint">品牌溯源 / 关于我们（图文混排）</div>
+      </a>
+      <a class="stat-card" href="/verify/general?product_id={{ product.id }}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
+        <div class="stat-label">页面预览</div>
+        <div class="stat-value">通用页</div>
+        <div class="stat-hint">查看扫码落地效果</div>
+      </a>
+      <a class="stat-card" href="/admin/products/{{ product.id }}/preview/verify" style="text-decoration:none;">
+        <div class="stat-label">页面预览</div>
+        <div class="stat-value">防伪页</div>
+        <div class="stat-hint">随机取一个码预览，不计入查询</div>
+      </a>
+    </div>
+  </div>
+{% endblock %}

@@ -44,6 +44,8 @@ def config_page(request: Request, db: Session = Depends(get_db)):
 def config_submit(
     request: Request,
     show_code: str | None = Form(None),
+    show_product_name: str | None = Form(None),
+    show_batch_date: str | None = Form(None),
     warning_threshold: str = Form("5"),
     recent_events_limit: str = Form("5"),
     contact_us_url: str = Form(""),
@@ -59,6 +61,8 @@ def config_submit(
     cfg = _get_or_create_config(db)
 
     cfg.show_code = show_code is not None
+    cfg.show_product_name = show_product_name is not None
+    cfg.show_batch_date = show_batch_date is not None
     try:
         cfg.warning_threshold = max(1, int(warning_threshold))
     except ValueError:

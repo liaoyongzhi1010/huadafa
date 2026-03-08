@@ -6,7 +6,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">产品</h1>
-        <div class="muted page-subtitle">创建产品信息，进入批次生成防伪码并导出</div>
+        <div class="muted page-subtitle">每个产品独立管理批次、商品推荐、产品描述</div>
       </div>
       <div class="actions">
         <a class="btn btn-primary" href="/admin/products/new">新增产品</a>
@@ -31,8 +31,7 @@
                   </td>
                   <td>
                     <div class="actions">
-                      <a class="btn" href="/admin/products/{{ p.id }}/batches">批次</a>
-                      <a class="btn" href="/admin/products/{{ p.id }}/edit">编辑</a>
+                      <a class="btn btn-primary" href="/admin/products/{{ p.id }}/batches">产品工作台</a>
                       <a class="btn btn-danger" href="/admin/products/{{ p.id }}/delete">删除</a>
                     </div>
                   </td>

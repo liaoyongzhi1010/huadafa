@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -8,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import get_db
 from app.main import app
-from app.models import Base
+from app.models import AntiCode, Base, Batch, Product
 
 
 @pytest.fixture()
@@ -50,4 +52,61 @@ def test_admin_products_page_and_create(admin_client_and_sessionmaker):
     r3 = client.get("/admin/products")
     assert r3.status_code == 200
     assert "ICOM 打火机" in r3.text
+    assert "产品工作台" in r3.text
+    assert "/admin/products/" in r3.text
+    assert "/edit" not in r3.text
+    assert "/workspace" not in r3.text
+    assert "/batches" in r3.text
 
+
+def test_admin_product_workspace_route_redirects_to_batches(admin_client_and_sessionmaker):
+    client, SessionLocal = admin_client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="Jump", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+    r = client.get(f"/admin/products/{product_id}/workspace", follow_redirects=False)
+    assert r.status_code in (302, 303)
+    assert r.headers["location"].endswith(f"/admin/products/{product_id}/batches")
+
+
+def test_admin_product_preview_verify_redirects_with_random_code(admin_client_and_sessionmaker):
+    client, SessionLocal = admin_client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="P", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+        batch = Batch(product_id=product_id, production_date=date(2026, 3, 7), note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        db.add(AntiCode(code="1234432112344321", product_id=product_id, batch_id=batch.id, status="active"))
+        db.commit()
+
+    r = client.get(f"/admin/products/{product_id}/preview/verify", follow_redirects=False)
+    assert r.status_code in (302, 303)
+    assert r.headers["location"].endswith("/verify?code=1234432112344321&preview=1")
+
+
+def test_admin_product_preview_verify_redirects_to_workspace_when_no_code(admin_client_and_sessionmaker):
+    client, SessionLocal = admin_client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="NoCode", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+    r = client.get(f"/admin/products/{product_id}/preview/verify", follow_redirects=False)
+    assert r.status_code in (302, 303)
+    assert r.headers["location"].endswith(f"/admin/products/{product_id}/batches/new?notice=preview_no_code")

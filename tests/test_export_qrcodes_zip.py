@@ -73,3 +73,19 @@ def test_export_qrcodes_zip_contains_pngs(admin_client_and_sessionmaker):
     assert "7777888899990000.png" in names
     assert "8888999900001111.png" in names
 
+
+def test_export_generic_qrcode_png(admin_client_and_sessionmaker):
+    client, SessionLocal = admin_client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="P", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+        product_id = product.id
+
+    r = client.get(f"/admin/products/{product_id}/export/generic-qrcode.png")
+    assert r.status_code == 200
+    assert "image/png" in r.headers.get("content-type", "")
+    assert r.content.startswith(b"\x89PNG\r\n\x1a\n")
