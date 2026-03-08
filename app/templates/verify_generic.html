@@ -244,6 +244,7 @@
       min-width: 100%;
       flex: 0 0 100%;
       scroll-snap-align: start;
+      scroll-snap-stop: always;
     }
 
     .v-reco {
@@ -518,52 +519,59 @@
         var rafTicking = false;
         var lastManualAt = 0;
         var AUTO_MS = 3200;
-        var MANUAL_PAUSE_MS = 9000;
-        var WINDOW_MS = 800;
-
         if (items.length <= 1) return;
-
-        function clampIndex(v) {
-          if (v < 0) return 0;
-          if (v >= items.length) return items.length - 1;
-          return v;
-        }
-
-        function currentIndex() {
-          if (!items.length) return 0;
-          var w = track.clientWidth || 1;
-          return clampIndex(Math.round(track.scrollLeft / w));
-        }
 
         function setActive(idx) {
           dots.forEach(function (d, i) { d.classList.toggle("active", i === idx); });
         }
 
-        function goTo(idx, smooth) {
-          idx = clampIndex(idx);
-          var w = track.clientWidth || 1;
-          track.scrollTo({ left: idx * w, behavior: smooth ? "smooth" : "auto" });
-          setActive(idx);
+        function maxIndex() {
+          return Math.max(0, items.length - 1);
         }
 
-        function shouldAutoNow() {
-          return Date.now() - lastManualAt >= MANUAL_PAUSE_MS;
+        function nearestIndex() {
+          if (!items.length) return 0;
+          var left = track.scrollLeft;
+          var best = 0;
+          var bestDist = Number.POSITIVE_INFINITY;
+          items.forEach(function (item, i) {
+            var dist = Math.abs(item.offsetLeft - left);
+            if (dist < bestDist) {
+              bestDist = dist;
+              best = i;
+            }
+          });
+          return best;
         }
 
-        function startAuto() {
-          stopAuto();
+        function goTo(index, behavior) {
+          if (!items.length) return;
+          var safe = Math.max(0, Math.min(maxIndex(), index));
+          var target = items[safe];
+          if (!target) return;
+          track.scrollTo({ left: target.offsetLeft, behavior: behavior || "smooth" });
+          setActive(safe);
+        }
+
+        function syncActiveSoon() {
+          if (!dots.length) return;
+          if (rafTicking) return;
+          rafTicking = true;
+          requestAnimationFrame(function () {
+            rafTicking = false;
+            setActive(nearestIndex());
+          });
+        }
+
+        function startAutoPlay() {
+          if (maxIndex() < 1) return;
+          if (autoTimer) clearInterval(autoTimer);
           autoTimer = window.setInterval(function () {
-            if (!shouldAutoNow()) return;
-            var idx = currentIndex();
-            goTo((idx + 1) % items.length, true);
+            if (document.hidden) return;
+            if (Date.now() - lastManualAt < AUTO_MS + 450) return;
+            var idx = nearestIndex();
+            goTo(idx >= maxIndex() ? 0 : idx + 1, "smooth");
           }, AUTO_MS);
-        }
-
-        function stopAuto() {
-          if (autoTimer) {
-            window.clearInterval(autoTimer);
-            autoTimer = null;
-          }
         }
 
         function markManual() {
@@ -574,46 +582,25 @@
           dot.addEventListener("click", function () {
             var idx = Number(dot.getAttribute("data-index") || 0);
             markManual();
-            goTo(idx, true);
+            goTo(idx, "smooth");
           });
         });
-
-        var pointerDown = false;
-        track.addEventListener("pointerdown", function () { pointerDown = true; });
-        track.addEventListener("pointerup", function () {
-          if (pointerDown) {
-            pointerDown = false;
-            markManual();
-            window.setTimeout(function () { setActive(currentIndex()); }, WINDOW_MS);
-          }
-        });
-        track.addEventListener("pointercancel", function () { pointerDown = false; });
 
         track.addEventListener("scroll", function () {
-          if (rafTicking) return;
-          rafTicking = true;
-          window.requestAnimationFrame(function () {
-            rafTicking = false;
-            setActive(currentIndex());
-          });
+          markManual();
+          syncActiveSoon();
         }, { passive: true });
 
-        window.addEventListener("resize", function () {
-          goTo(currentIndex(), false);
-        });
+        track.addEventListener("touchstart", markManual, { passive: true });
+        track.addEventListener("touchend", syncActiveSoon, { passive: true });
+        track.addEventListener("pointerdown", markManual);
+        track.addEventListener("pointerup", syncActiveSoon);
+        track.addEventListener("wheel", markManual, { passive: true });
 
-        if (document.hidden) {
-          stopAuto();
-        } else {
-          startAuto();
-        }
-        document.addEventListener("visibilitychange", function () {
-          if (document.hidden) {
-            stopAuto();
-          } else {
-            startAuto();
-          }
-        });
+        window.addEventListener("resize", syncActiveSoon);
+
+        setActive(nearestIndex());
+        startAutoPlay();
       }
 
       initRecommendationCarousel();

@@ -428,6 +428,8 @@ def test_verify_generic_page_shows_recommendations_when_configured(client_and_se
     assert "https://img.example/generic-reco-2.png" in r.text
     assert "v-reco-track" in r.text
     assert "v-reco-dots" in r.text
+    assert "target.offsetLeft" in r.text
+    assert "track.scrollLeft / w" not in r.text
 
 
 def test_verify_generic_page_respects_display_switches(client_and_sessionmaker):
