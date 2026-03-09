@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import AntiCode, Batch, PageContent, Product, Recommendation, ScanEvent, VerifyConfig
+from app.services.page_skins import DEFAULT_PAGE_SKIN_ID, get_page_skin, normalize_page_skin_id, skin_settings_storage_key
 from app.services.track_scan import track_scan
 from app.web import templates
 
@@ -363,6 +364,15 @@ def _apply_preview_visibility_overrides(
     return overridden
 
 
+def _load_product_skin_id(db: Session, *, product_id: int) -> str:
+    row = db.execute(
+        select(PageContent).where(PageContent.key == skin_settings_storage_key(product_id))
+    ).scalar_one_or_none()
+    if row is None or not isinstance(row.content_json, dict):
+        return DEFAULT_PAGE_SKIN_ID
+    return normalize_page_skin_id(row.content_json.get("skin_id"))
+
+
 @router.get("/verify")
 def verify_page(
     request: Request,
@@ -397,6 +407,7 @@ def verify_page(
         **_DEFAULT_BRAND_SETTINGS,
         **_DEFAULT_VERIFY_PAGE_VISIBILITY,
     }
+    skin_id = normalize_page_skin_id(request.query_params.get("skin_id")) if preview_mode else DEFAULT_PAGE_SKIN_ID
 
     visitor_id = request.cookies.get("visitor_id")
     set_cookie = False
@@ -407,8 +418,11 @@ def verify_page(
     if _CODE_RE.match(code):
         anti_code = db.execute(select(AntiCode).where(AntiCode.code == code)).scalar_one_or_none()
         if anti_code is not None:
+            skin_id = _load_product_skin_id(db, product_id=anti_code.product_id)
             verify_page_settings = _load_verify_page_settings_for_product(db, product_id=anti_code.product_id)
             if preview_mode:
+                if "skin_id" in request.query_params:
+                    skin_id = normalize_page_skin_id(request.query_params.get("skin_id"))
                 verify_page_settings = _apply_preview_visibility_overrides(
                     request,
                     visibility_settings=verify_page_settings,
@@ -514,6 +528,7 @@ def verify_page(
         request,
         "verify.html",
         {
+            "skin": get_page_skin(skin_id),
             "status": status,
             "message": message,
             "code": code,
@@ -557,6 +572,7 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
     cfg = _load_verify_config(db)
     generic_settings = _load_generic_settings_for_product(db, product_id=product_id, cfg=cfg)
     preview_mode = _is_preview_mode(request.query_params.get("preview"))
+    skin_id = normalize_page_skin_id(request.query_params.get("skin_id")) if preview_mode else DEFAULT_PAGE_SKIN_ID
     product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
 
     if product is None:
@@ -564,6 +580,7 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
             request,
             "verify_generic.html",
             {
+                "skin": get_page_skin(skin_id),
                 "message": "未查询到产品信息",
                 "show_product_name": False,
                 "show_batch_date": False,
@@ -579,7 +596,10 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
             },
         )
 
+    skin_id = _load_product_skin_id(db, product_id=product_id)
     if preview_mode:
+        if "skin_id" in request.query_params:
+            skin_id = normalize_page_skin_id(request.query_params.get("skin_id"))
         generic_settings = _apply_preview_visibility_overrides(
             request,
             visibility_settings=generic_settings,
@@ -644,6 +664,7 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
         request,
         "verify_generic.html",
         {
+            "skin": get_page_skin(skin_id),
             "message": str(generic_settings["generic_message"]),
             "show_product_name": bool(generic_settings["show_product_name"]),
             "show_batch_date": bool(generic_settings["show_batch_date"]),

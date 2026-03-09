@@ -73,6 +73,8 @@ def test_batches_list_has_no_generate_column(admin_client_and_sessionmaker):
     assert "防伪设置" in r.text
     assert f'href="/admin/products/{product_id}/contact-settings"' in r.text
     assert "联系我们设置" in r.text
+    assert f'href="/admin/products/{product_id}/skin-settings"' in r.text
+    assert "皮肤设置" in r.text
     assert "预览防伪页" not in r.text
     assert "预览通用页" not in r.text
     assert "新建批次" not in r.text
@@ -82,5 +84,6 @@ def test_batches_list_has_no_generate_column(admin_client_and_sessionmaker):
         < r.text.index("防伪设置")
         < r.text.index("通用页设置")
         < r.text.index("联系我们设置")
+        < r.text.index("皮肤设置")
         < r.text.index("返回产品列表")
     )

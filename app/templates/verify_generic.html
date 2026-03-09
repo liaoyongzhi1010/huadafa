@@ -3,16 +3,11 @@
 {% block head_extra %}
   <style>
     :root {
-      --bg: #f4f6f9;
-      --surface: #ffffff;
-      --surface-soft: #f8fafc;
-      --text: #0f172a;
-      --muted: #64748b;
-      --line: #e2e8f0;
-      --brand: #c81e1e;
-      --brand-deep: #8f1010;
       --ok: #16a34a;
       --danger: #dc2626;
+      {% for key, value in skin.css_vars.items() %}
+        {{ key }}: {{ value }};
+      {% endfor %}
     }
 
     body {
@@ -20,8 +15,8 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(860px 280px at -6% -6%, rgba(200, 30, 30, 0.12), rgba(200, 30, 30, 0) 68%),
-        radial-gradient(860px 300px at 106% -10%, rgba(37, 99, 235, 0.10), rgba(37, 99, 235, 0) 70%),
+        var(--bg-layer-1),
+        var(--bg-layer-2),
         var(--bg);
     }
 
@@ -41,22 +36,23 @@
     }
 
     .v-brand {
-      border-radius: 18px;
-      background: linear-gradient(132deg, #1f2937, #0f172a 56%, #3d0f1b 100%);
+      border-radius: var(--hero-radius);
+      background: var(--hero-bg);
       color: #fff;
       padding: 14px 15px;
       display: flex;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+      box-shadow: var(--hero-shadow);
     }
 
     .v-mark {
       width: 44px;
       height: 44px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.32);
-      background: rgba(255, 255, 255, 0.13);
+      border-radius: var(--mark-radius);
+      border: 1px solid var(--mark-border);
+      background: var(--mark-bg);
+      color: var(--mark-text);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -76,18 +72,16 @@
     .v-brand-sub {
       margin-top: 3px;
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.78);
+      color: var(--brand-subtle);
       letter-spacing: 0.4px;
     }
 
     .v-card {
-      border-radius: 20px;
-      border: 1px solid rgba(15, 23, 42, 0.06);
-      background: var(--surface);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
       padding: 17px;
-      box-shadow:
-        0 16px 36px rgba(15, 23, 42, 0.10),
-        0 4px 14px rgba(15, 23, 42, 0.06);
+      box-shadow: var(--card-shadow);
     }
 
     .v-status {
@@ -116,7 +110,7 @@
       font-size: clamp(22px, 6vw, 34px);
       font-weight: 780;
       line-height: 1.2;
-      color: #0f172a;
+      color: var(--title-color);
       text-align: center;
       word-break: break-word;
     }
@@ -134,7 +128,7 @@
       align-items: baseline;
       justify-content: space-between;
       gap: 12px;
-      border-bottom: 1px solid #e9eef5;
+      border-bottom: 1px solid var(--line);
       padding: 9px 2px;
     }
 
@@ -151,7 +145,7 @@
     }
 
     .v-value {
-      color: #0f172a;
+      color: var(--title-color);
       font-size: 15px;
       font-weight: 700;
       text-align: right;
@@ -178,7 +172,7 @@
     .v-content-text {
       display: block;
       margin-top: 11px;
-      color: #111827;
+      color: var(--text);
       font-size: 15.5px;
       line-height: 2;
       letter-spacing: 0.22px;
@@ -191,15 +185,15 @@
 
     .v-content-text:not([href]) {
       padding: 12px 14px 12px 15px;
-      border-radius: 14px;
-      border: 1px solid #dde5f0;
-      border-left: 3px solid #8fa2ba;
-      background: linear-gradient(160deg, #ffffff 0%, #f6f8fc 100%);
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+      border-radius: var(--button-radius);
+      border: 1px solid var(--content-box-border);
+      border-left: 3px solid var(--content-box-accent);
+      background: var(--content-box-bg);
+      box-shadow: var(--content-box-shadow);
     }
 
     .v-content-text[href] {
-      color: #0f4ca8;
+      color: var(--accent);
       text-decoration: underline;
       text-underline-offset: 2px;
     }
@@ -210,9 +204,9 @@
       margin-top: 11px;
       border-radius: 0;
       overflow: hidden;
-      border: 1px solid #dbe3ee;
+      border: 1px solid var(--media-border);
       background: #fff;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.09);
+      box-shadow: var(--media-shadow);
     }
 
     .v-content-image {
@@ -251,10 +245,10 @@
       display: block;
       border-radius: 0;
       overflow: hidden;
-      border: 1px solid #dbe3ee;
+      border: 1px solid var(--media-border);
       background: #fff;
       text-decoration: none;
-      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.11);
+      box-shadow: var(--reco-shadow);
     }
 
     .v-reco img {
@@ -277,8 +271,8 @@
       gap: 6px;
       padding: 4px 8px;
       border-radius: 999px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: var(--dots-bg);
+      border: 1px solid var(--dots-border);
     }
 
     .v-reco-dot {
@@ -286,7 +280,7 @@
       height: 7px;
       border-radius: 999px;
       border: 0;
-      background: #cbd5e1;
+      background: var(--dot-bg);
       opacity: 0.92;
       padding: 0;
       cursor: pointer;
@@ -295,7 +289,7 @@
 
     .v-reco-dot.active {
       width: 18px;
-      background: #334155;
+      background: var(--dot-active);
       opacity: 1;
     }
 
@@ -313,9 +307,9 @@
     .tabs::-webkit-scrollbar { display: none; }
 
     .tab-btn {
-      border: 1px solid #d5dee9;
-      background: #fff;
-      color: #4b5563;
+      border: 1px solid var(--tab-border);
+      background: var(--tab-bg);
+      color: var(--tab-text);
       border-radius: 999px;
       font-size: 13px;
       font-weight: 650;
@@ -325,10 +319,10 @@
     }
 
     .tab-btn.active {
-      color: #fff;
-      border-color: rgba(200, 30, 30, 0.55);
-      background: linear-gradient(135deg, var(--brand), var(--brand-deep));
-      box-shadow: 0 7px 16px rgba(200, 30, 30, 0.22);
+      color: var(--tab-active-text);
+      border-color: var(--tab-active-border);
+      background: var(--tab-active-bg);
+      box-shadow: var(--tab-active-shadow);
     }
 
     .tab-panel {
@@ -345,30 +339,30 @@
       display: inline-block;
       width: 100%;
       box-sizing: border-box;
-      border-radius: 14px;
+      border-radius: var(--button-radius);
       text-decoration: none;
       text-align: center;
-      background: linear-gradient(135deg, var(--brand), var(--brand-deep));
-      color: #fff;
+      background: var(--button-bg);
+      color: var(--button-text);
       font-size: 15px;
       font-weight: 680;
       letter-spacing: 0.2px;
-      border: 1px solid rgba(200, 30, 30, 0.45);
+      border: 1px solid var(--button-border);
       padding: 12px 14px;
-      box-shadow: 0 10px 20px rgba(143, 16, 16, 0.22);
+      box-shadow: var(--button-shadow);
     }
 
     .btn:active { transform: translateY(1px); }
 
     @media (max-width: 390px) {
       .v-brand-name { font-size: 17px; }
-      .v-card { padding: 14px; border-radius: 16px; }
+      .v-card { padding: 14px; }
       .v-title { font-size: 28px; }
     }
   </style>
 {% endblock %}
 {% block body %}
-  <div class="v-shell">
+  <div class="v-shell" data-page-skin="{{ skin.id }}">
     <div class="v-hero">
       <div class="container">
         <div class="v-brand">

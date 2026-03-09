@@ -394,6 +394,66 @@ def test_verify_page_preview_mode_applies_query_overrides(client_and_sessionmake
     assert "PREVIEW SUB" in r.text
 
 
+def test_verify_pages_use_default_skin_when_not_configured(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="DEFAULT-SKIN", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+        batch = Batch(product_id=product.id, production_date=date(2026, 3, 10), note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        db.add(AntiCode(code="2026031020260312", product_id=product.id, batch_id=batch.id, scan_count=0))
+        db.commit()
+
+    verify = client.get("/verify", params={"code": "2026031020260312", "preview": "1"})
+    assert verify.status_code == 200
+    assert 'data-page-skin="classic_red"' in verify.text
+
+    generic = client.get("/verify/general", params={"product_id": str(product_id)})
+    assert generic.status_code == 200
+    assert 'data-page-skin="classic_red"' in generic.text
+
+
+def test_verify_pages_use_saved_skin_settings(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="SAVED-SKIN", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+        batch = Batch(product_id=product.id, production_date=date(2026, 3, 10), note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        db.add(AntiCode(code="2026031020260313", product_id=product.id, batch_id=batch.id, scan_count=0))
+        db.add(
+            PageContent(
+                key=f"product:{product_id}:skin_settings",
+                content_json={"skin_id": "black_gold"},
+            )
+        )
+        db.commit()
+
+    verify = client.get("/verify", params={"code": "2026031020260313", "preview": "1"})
+    assert verify.status_code == 200
+    assert 'data-page-skin="black_gold"' in verify.text
+
+    generic = client.get("/verify/general", params={"product_id": str(product_id)})
+    assert generic.status_code == 200
+    assert 'data-page-skin="black_gold"' in generic.text
+
+
 def test_verify_page_shows_not_found_message(client_and_sessionmaker):
     client, _ = client_and_sessionmaker
 
@@ -719,6 +779,46 @@ def test_verify_generic_page_preview_mode_applies_query_overrides(client_and_ses
     assert "通用预览标" in r.text
     assert "通用预览标题" in r.text
     assert "GENERIC PREVIEW SUB" in r.text
+
+
+def test_verify_pages_preview_mode_supports_skin_override(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="PREVIEW-SKIN", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+        batch = Batch(product_id=product.id, production_date=date(2026, 3, 10), note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        db.add(AntiCode(code="2026031020260314", product_id=product.id, batch_id=batch.id, scan_count=0))
+        db.commit()
+
+    verify = client.get(
+        "/verify",
+        params={"code": "2026031020260314", "preview": "1", "skin_id": "ocean_blue"},
+    )
+    assert verify.status_code == 200
+    assert 'data-page-skin="ocean_blue"' in verify.text
+
+    generic = client.get(
+        "/verify/general",
+        params={"product_id": str(product_id), "preview": "1", "skin_id": "forest_green"},
+    )
+    assert generic.status_code == 200
+    assert 'data-page-skin="forest_green"' in generic.text
+
+    sample_style = client.get(
+        "/verify/general",
+        params={"product_id": str(product_id), "preview": "1", "skin_id": "mist_rose"},
+    )
+    assert sample_style.status_code == 200
+    assert 'data-page-skin="mist_rose"' in sample_style.text
 
 
 def test_verify_generic_page_shows_recommendations_when_configured(client_and_sessionmaker):

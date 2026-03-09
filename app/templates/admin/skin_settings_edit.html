@@ -1,0 +1,226 @@
+{% extends "admin/base.html" %}
+{% block title %}皮肤设置{% endblock %}
+{% block topbar_title %}皮肤设置{% endblock %}
+{% block body %}
+  <style>
+    .phone-title {
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .phone-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .phone-shell {
+      width: 100%;
+      max-width: 380px;
+      margin: 0 auto;
+      border: 10px solid #0f172a;
+      border-radius: 28px;
+      background: #fff;
+      overflow: hidden;
+      aspect-ratio: 390 / 844;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+    }
+    .phone-shell iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #fff;
+    }
+    .skin-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .skin-card {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
+    .skin-card:hover {
+      border-color: var(--primary-100);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+      transform: translateY(-1px);
+    }
+    .skin-card.is-active {
+      border-color: var(--primary);
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.14);
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+    }
+    .skin-radio {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 16px;
+      height: 16px;
+      margin: 0;
+    }
+    .skin-name {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+      padding-right: 24px;
+    }
+    .skin-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      min-height: 36px;
+    }
+    .skin-swatches {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .skin-swatch {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+    .preview-section {
+      margin-top: 14px;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
+    @media (max-width: 720px) {
+      .skin-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .preview-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+
+  <div class="container">
+    {% include "admin/_product_tabs.html" %}
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">皮肤设置</h1>
+        <div class="muted page-subtitle">产品：{{ product.name }}（选择皮肤后，下方会同时预览防伪页和通用页）</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <form class="form" method="post" action="/admin/products/{{ product.id }}/skin-settings" id="skinSettingsForm">
+        <div class="skin-grid">
+          {% for skin in skins %}
+            <label class="skin-card{% if selected_skin_id == skin.id %} is-active{% endif %}" data-skin-card="{{ skin.id }}">
+              <input
+                class="skin-radio"
+                type="radio"
+                name="skin_id"
+                value="{{ skin.id }}"
+                {% if selected_skin_id == skin.id %}checked{% endif %}
+              />
+              <div class="skin-name">{{ skin.name }}</div>
+              <div class="skin-desc">{{ skin.description }}</div>
+              <div class="skin-swatches">
+                {% for color in skin.preview_colors %}
+                  <div class="skin-swatch" style="background: {{ color }};"></div>
+                {% endfor %}
+              </div>
+            </label>
+          {% endfor %}
+        </div>
+        <div class="actions" style="margin-top:14px;">
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="preview-section">
+      <div class="preview-grid">
+        <div class="card">
+          <div class="phone-title">手机整页预览：防伪页</div>
+          <div class="phone-note">切换皮肤后，这里会即时显示当前未保存选择。</div>
+          <div class="phone-shell">
+            {% if verify_preview_url %}
+              <iframe
+                id="skinPreviewVerifyFrame"
+                src="{{ verify_preview_url }}"
+                data-preview-base-url="{{ verify_preview_base_url }}"
+                title="防伪页皮肤预览"
+                loading="lazy"
+              ></iframe>
+            {% else %}
+              <div style="height:100%; display:flex; align-items:center; justify-content:center; padding:16px; text-align:center; color: var(--muted); font-size:13px; line-height:1.6;">暂无可用防伪码<br/>请先新建批次后预览防伪页皮肤</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="phone-title">手机整页预览：通用页</div>
+          <div class="phone-note">通用页与防伪页共用同一套皮肤。</div>
+          <div class="phone-shell">
+            <iframe
+              id="skinPreviewGenericFrame"
+              src="{{ generic_preview_url }}"
+              data-preview-base-url="{{ generic_preview_base_url }}"
+              title="通用页皮肤预览"
+              loading="lazy"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var form = document.getElementById("skinSettingsForm");
+      if (!form) return;
+
+      var verifyFrame = document.getElementById("skinPreviewVerifyFrame");
+      var genericFrame = document.getElementById("skinPreviewGenericFrame");
+
+      function selectedSkinId() {
+        var checked = form.querySelector('input[name="skin_id"]:checked');
+        return checked ? checked.value : "";
+      }
+
+      function syncCardState() {
+        var current = selectedSkinId();
+        form.querySelectorAll("[data-skin-card]").forEach(function (card) {
+          card.classList.toggle("is-active", card.getAttribute("data-skin-card") === current);
+        });
+      }
+
+      function syncFrame(frame) {
+        if (!frame) return;
+        var baseUrl = frame.getAttribute("data-preview-base-url");
+        if (!baseUrl) return;
+        var url = new URL(baseUrl, window.location.origin);
+        url.searchParams.set("skin_id", selectedSkinId());
+        frame.setAttribute("src", url.pathname + "?" + url.searchParams.toString());
+      }
+
+      function syncPreview() {
+        syncCardState();
+        syncFrame(verifyFrame);
+        syncFrame(genericFrame);
+      }
+
+      form.querySelectorAll('input[name="skin_id"]').forEach(function (radio) {
+        radio.addEventListener("change", syncPreview);
+      });
+    })();
+  </script>
+{% endblock %}
