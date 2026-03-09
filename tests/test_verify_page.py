@@ -95,7 +95,7 @@ def test_verify_page_shows_genuine_message(client_and_sessionmaker):
     assert "产品详情文字" in r.text
     assert "/uploads/products/1/x.png" in r.text
     assert "暂无推荐" in r.text
-    assert r.text.index("产品信息") < r.text.index("官方推荐")
+    assert r.text.index("官方推荐") < r.text.index("产品信息")
     assert "品牌溯源内容" in r.text
     assert "关于我们内容" in r.text
     assert "测标" in r.text
@@ -380,6 +380,7 @@ def test_verify_generic_page_shows_product_and_batch_info(client_and_sessionmake
     assert "关于我们" in r.text
     assert "通用页关于我们内容" in r.text
     assert "官方推荐" in r.text
+    assert r.text.index("官方推荐") < r.text.index("产品信息")
     assert "暂无推荐" in r.text
     assert "测标通用" in r.text
     assert "中国爱酷防伪中心" in r.text
