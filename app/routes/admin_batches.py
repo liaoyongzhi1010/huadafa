@@ -12,6 +12,7 @@ from starlette.status import HTTP_303_SEE_OTHER
 
 from app.db import get_db
 from app.models import AntiCode, Batch, Product
+from app.services.batch_dates import batch_date_error_message, normalize_batch_date
 from app.web import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -32,6 +33,55 @@ def _generate_code() -> str:
 def _is_delete_confirmed(confirm_text: str) -> bool:
     t = (confirm_text or "").strip()
     return t == "删除" or t.upper() == "DELETE"
+
+
+def _render_batch_new_form(
+    request: Request,
+    *,
+    product: Product,
+    production_date: str,
+    quantity: str,
+    note: str,
+    error: str,
+    notice_message: str = "",
+    status_code: int = 200,
+):
+    return templates.TemplateResponse(
+        request,
+        "admin/batch_new.html",
+        {
+            "product": product,
+            "production_date": production_date,
+            "quantity": quantity,
+            "note": note,
+            "error": error,
+            "notice_message": notice_message,
+        },
+        status_code=status_code,
+    )
+
+
+def _render_batch_edit_form(
+    request: Request,
+    *,
+    batch: Batch,
+    production_date: str,
+    note: str,
+    error: str,
+    status_code: int = 200,
+):
+    return templates.TemplateResponse(
+        request,
+        "admin/batch_edit.html",
+        {
+            "batch": batch,
+            "product": batch.product,
+            "production_date": production_date,
+            "note": note,
+            "error": error,
+        },
+        status_code=status_code,
+    )
 
 
 @router.post("/batches/{batch_id}/codes/generate")
@@ -153,16 +203,14 @@ def product_batch_new_page(request: Request, product_id: int, db: Session = Depe
     if notice == "preview_no_code":
         notice_message = "当前产品没有可用防伪码，请先新建批次并生成防伪码。"
 
-    return templates.TemplateResponse(
+    return _render_batch_new_form(
         request,
-        "admin/batch_new.html",
-        {
-            "product": product,
-            "today": date.today().isoformat(),
-            "quantity": "100",
-            "error": "",
-            "notice_message": notice_message,
-        },
+        product=product,
+        production_date=date.today().isoformat(),
+        quantity="100",
+        note="",
+        error="",
+        notice_message=notice_message,
     )
 
 
@@ -184,9 +232,17 @@ def product_batch_new_submit(
         return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
 
     try:
-        parsed_date = date.fromisoformat(production_date)
+        normalized_date = normalize_batch_date(production_date)
     except ValueError:
-        parsed_date = date.today()
+        return _render_batch_new_form(
+            request,
+            product=product,
+            production_date=production_date,
+            quantity=quantity,
+            note=note,
+            error=batch_date_error_message(),
+            status_code=200,
+        )
 
     try:
         n = int(quantity)
@@ -194,19 +250,17 @@ def product_batch_new_submit(
         n = 0
     n = max(0, min(n, 10000))
     if n <= 0:
-        return templates.TemplateResponse(
+        return _render_batch_new_form(
             request,
-            "admin/batch_new.html",
-            {
-                "product": product,
-                "today": parsed_date.isoformat(),
-                "quantity": quantity,
-                "error": "数量必须为 1–10000。",
-            },
+            product=product,
+            production_date=normalized_date,
+            quantity=quantity,
+            note=note,
+            error="数量必须为 1–10000。",
             status_code=200,
         )
 
-    batch = Batch(product_id=product_id, production_date=parsed_date, note=note)
+    batch = Batch(product_id=product_id, production_date=normalized_date, note=note)
     db.add(batch)
     db.commit()
     db.refresh(batch)
@@ -233,6 +287,64 @@ def product_batch_new_submit(
 
     return RedirectResponse(
         url=f"/admin/products/{product_id}/batches",
+        status_code=HTTP_303_SEE_OTHER,
+    )
+
+
+@router.get("/batches/{batch_id}/edit")
+def batch_edit_page(request: Request, batch_id: int, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    batch = db.execute(select(Batch).where(Batch.id == batch_id)).scalar_one_or_none()
+    if batch is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    return _render_batch_edit_form(
+        request,
+        batch=batch,
+        production_date=batch.production_date,
+        note=batch.note,
+        error="",
+    )
+
+
+@router.post("/batches/{batch_id}/edit")
+def batch_edit_submit(
+    request: Request,
+    batch_id: int,
+    production_date: str = Form(""),
+    note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect is not None:
+        return redirect
+
+    batch = db.execute(select(Batch).where(Batch.id == batch_id)).scalar_one_or_none()
+    if batch is None:
+        return RedirectResponse(url="/admin/products", status_code=HTTP_303_SEE_OTHER)
+
+    try:
+        normalized_date = normalize_batch_date(production_date)
+    except ValueError:
+        return _render_batch_edit_form(
+            request,
+            batch=batch,
+            production_date=production_date,
+            note=note,
+            error=batch_date_error_message(),
+            status_code=200,
+        )
+
+    batch.production_date = normalized_date
+    batch.note = note
+    db.add(batch)
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/admin/products/{batch.product_id}/batches",
         status_code=HTTP_303_SEE_OTHER,
     )
 

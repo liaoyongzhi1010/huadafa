@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import date
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -51,7 +49,7 @@ def test_admin_can_create_batch_for_product(admin_client_and_sessionmaker):
 
     r = client.post(
         f"/admin/products/{product_id}/batches/new",
-        data={"production_date": date(2026, 2, 12).isoformat(), "note": "第一批", "quantity": "3"},
+        data={"production_date": "2026-02-12", "note": "第一批", "quantity": "3"},
         follow_redirects=False,
     )
     assert r.status_code in (302, 303)
@@ -59,6 +57,7 @@ def test_admin_can_create_batch_for_product(admin_client_and_sessionmaker):
     with SessionLocal() as db:
         batch = db.query(Batch).filter(Batch.product_id == product_id).order_by(Batch.id.desc()).first()
         assert batch is not None
+        assert batch.production_date == "2026-02-12"
         codes = db.query(AntiCode).filter(AntiCode.batch_id == batch.id).all()
         assert len(codes) == 3
 
@@ -76,7 +75,7 @@ def test_admin_batch_detail_redirects_to_product_batches(admin_client_and_sessio
         db.commit()
         db.refresh(product)
 
-        batch = Batch(product_id=product.id, production_date=date(2026, 2, 12), note="第一批")
+        batch = Batch(product_id=product.id, production_date="2026-02-12", note="第一批")
         db.add(batch)
         db.commit()
         db.refresh(batch)
@@ -87,3 +86,52 @@ def test_admin_batch_detail_redirects_to_product_batches(admin_client_and_sessio
     r = client.get(f"/admin/batches/{batch_id}", follow_redirects=False)
     assert r.status_code in (302, 303)
     assert r.headers["location"].endswith(f"/admin/products/{product_id}/batches")
+
+
+@pytest.mark.parametrize("batch_date", ["2026", "2026-02", "2026-02-12"])
+def test_admin_can_create_batch_with_supported_date_precision(
+    admin_client_and_sessionmaker, batch_date: str
+):
+    client, SessionLocal = admin_client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="P", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+    r = client.post(
+        f"/admin/products/{product_id}/batches/new",
+        data={"production_date": batch_date, "note": "多精度", "quantity": "1"},
+        follow_redirects=False,
+    )
+    assert r.status_code in (302, 303)
+
+    with SessionLocal() as db:
+        batch = db.query(Batch).filter(Batch.product_id == product_id).order_by(Batch.id.desc()).first()
+        assert batch is not None
+        assert batch.production_date == batch_date
+
+
+def test_admin_rejects_invalid_batch_date(admin_client_and_sessionmaker):
+    client, SessionLocal = admin_client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="P", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+    r = client.post(
+        f"/admin/products/{product_id}/batches/new",
+        data={"production_date": "2026-13", "note": "错误日期", "quantity": "1"},
+    )
+    assert r.status_code == 200
+    assert "批次日期格式必须是 YYYY、YYYY-MM 或 YYYY-MM-DD。" in r.text
+    assert 'value="2026-13"' in r.text
+
+    with SessionLocal() as db:
+        count = db.query(Batch).filter(Batch.product_id == product_id).count()
+        assert count == 0

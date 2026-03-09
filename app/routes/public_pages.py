@@ -392,7 +392,7 @@ def verify_page(
                 "detail_images": p.detail_images,
             }
             if anti_code.batch is not None:
-                production_date = anti_code.batch.production_date.isoformat()
+                production_date = anti_code.batch.production_date
             query_status_text = "首次查询" if scan_count <= 1 else "已被查询过"
         elif anti_code is not None:
             status = "disabled"
@@ -476,7 +476,7 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
 
     batch_date = ""
     if batch is not None:
-        batch_date = batch.production_date.isoformat()
+        batch_date = batch.production_date
     elif product.created_at is not None:
         batch_date = product.created_at.date().isoformat()
 

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import date
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -49,7 +47,7 @@ def test_batches_list_has_no_generate_column(admin_client_and_sessionmaker):
         db.refresh(product)
         product_id = product.id
 
-        batch = Batch(product_id=product.id, production_date=date(2026, 2, 12), note="")
+        batch = Batch(product_id=product.id, production_date="2026-02", note="")
         db.add(batch)
         db.commit()
         db.refresh(batch)
@@ -64,6 +62,7 @@ def test_batches_list_has_no_generate_column(admin_client_and_sessionmaker):
     assert "生成防伪码" not in r.text
     assert "/codes/generate" not in r.text
     assert f"/admin/batches/{batch_id}/export/csv" in r.text
+    assert f'href="/admin/batches/{batch_id}/edit"' in r.text
     assert f"/admin/products/{product_id}/export/generic-qrcode.png" in r.text
     assert "页面设置" in r.text
     assert f'href="/admin/products/{product_id}/content"' in r.text

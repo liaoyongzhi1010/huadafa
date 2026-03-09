@@ -74,3 +74,28 @@ def test_export_batch_csv_contains_verify_urls(admin_client_and_sessionmaker):
     assert "verify_url" in body
     assert "/verify?code=5555666677778888" in body
     assert "/verify?code=1111222233334444" in body
+
+
+def test_export_batch_csv_preserves_batch_date_precision(admin_client_and_sessionmaker):
+    client, SessionLocal = admin_client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="产品B", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+        batch = Batch(product_id=product.id, production_date="2026-02", note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        db.add(AntiCode(code="2222333344445555", product_id=product.id, batch_id=batch.id))
+        db.commit()
+
+        batch_id = batch.id
+
+    r = client.get(f"/admin/batches/{batch_id}/export/csv")
+    assert r.status_code == 200
+    body = r.content.decode("utf-8-sig")
+    assert "产品B,2026-02,2222333344445555" in body
