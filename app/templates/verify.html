@@ -458,7 +458,9 @@
           {% endif %}
 
           <div class="v-status-main">
-            <div class="v-title">{{ message }}</div>
+            {% if status != "genuine" or show_result_product_name %}
+              <div class="v-title">{{ message }}</div>
+            {% endif %}
             {% if status == "genuine" %}
               <div class="v-status-sub">官方防伪验证结果</div>
             {% endif %}
@@ -467,8 +469,10 @@
 
         {% if status == "genuine" %}
           <div class="v-meta-line">
-            <span class="v-meta-date">生产日期：{{ production_date or "—" }}</span>
-            <span class="v-meta-sep">·</span>
+            {% if show_batch_date %}
+              <span class="v-meta-date">生产日期：{{ production_date or "—" }}</span>
+              <span class="v-meta-sep">·</span>
+            {% endif %}
             <span class="v-meta-status {% if query_status_text == '首次查询' %}v-meta-status--first{% else %}v-meta-status--repeat{% endif %}">
               {{ query_status_text }}
             </span>
@@ -484,7 +488,7 @@
             <div class="v-alert">{{ text_warning }}</div>
           {% endif %}
 
-          {% if recent_events and recent_events|length > 0 %}
+          {% if show_recent_events and recent_events and recent_events|length > 0 %}
             <div class="hr"></div>
             <div class="v-block">
               <div class="v-section-title">最近验证时间</div>
@@ -496,42 +500,44 @@
             </div>
           {% endif %}
 
-          <div class="hr"></div>
-          <div class="v-section-title">官方推荐</div>
-          {% if recommendations and recommendations|length > 0 %}
-            <div class="v-reco-wrap">
-              <div class="v-reco-track" id="vRecoTrack">
-                {% for r in recommendations %}
-                  <div class="v-reco-item">
-                    {% if r.target_url %}
-                      <a class="v-reco" href="{{ r.target_url }}" aria-label="recommendation link">
-                        <img src="{{ r.image_url }}" alt="推荐" />
-                      </a>
-                    {% else %}
-                      <div class="v-reco">
-                        <img src="{{ r.image_url }}" alt="推荐" />
-                      </div>
-                    {% endif %}
-                  </div>
-                {% endfor %}
-              </div>
-              {% if recommendations|length > 1 %}
-                <div class="v-reco-controls">
-                  <div class="v-reco-dots" id="vRecoDots">
-                    {% for r in recommendations %}
-                      <button
-                        type="button"
-                        class="v-reco-dot{% if loop.index0 == 0 %} active{% endif %}"
-                        data-index="{{ loop.index0 }}"
-                        aria-label="推荐{{ loop.index }}"
-                      ></button>
-                    {% endfor %}
-                  </div>
+          {% if show_recommendations %}
+            <div class="hr"></div>
+            <div class="v-section-title">官方推荐</div>
+            {% if recommendations and recommendations|length > 0 %}
+              <div class="v-reco-wrap">
+                <div class="v-reco-track" id="vRecoTrack">
+                  {% for r in recommendations %}
+                    <div class="v-reco-item">
+                      {% if r.target_url %}
+                        <a class="v-reco" href="{{ r.target_url }}" aria-label="recommendation link">
+                          <img src="{{ r.image_url }}" alt="推荐" />
+                        </a>
+                      {% else %}
+                        <div class="v-reco">
+                          <img src="{{ r.image_url }}" alt="推荐" />
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
                 </div>
-              {% endif %}
-            </div>
-          {% else %}
-            <div class="muted">暂无推荐</div>
+                {% if recommendations|length > 1 %}
+                  <div class="v-reco-controls">
+                    <div class="v-reco-dots" id="vRecoDots">
+                      {% for r in recommendations %}
+                        <button
+                          type="button"
+                          class="v-reco-dot{% if loop.index0 == 0 %} active{% endif %}"
+                          data-index="{{ loop.index0 }}"
+                          aria-label="推荐{{ loop.index }}"
+                        ></button>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="muted">暂无推荐</div>
+            {% endif %}
           {% endif %}
 
           {% if verify_sections and verify_sections|length > 0 %}

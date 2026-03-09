@@ -43,6 +43,31 @@
       display: block;
       background: #fff;
     }
+    .visibility-group {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fafafa;
+    }
+    .visibility-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .visibility-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .visibility-option input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+    }
 
     @media (max-width: 1160px) {
       .editor-layout {
@@ -69,7 +94,8 @@
     <div class="editor-layout">
       <div>
         <div class="card">
-          <form class="form" method="post" action="/admin/products/{{ product.id }}/verify-page-settings">
+          <form class="form" method="post" action="/admin/products/{{ product.id }}/verify-page-settings" id="verifySettingsForm">
+            <input type="hidden" name="visibility_form" value="1" />
             <div class="form-row">
               <div class="label">顶部左侧标识</div>
               <input class="input" name="brand_mark" value="{{ brand_mark or '爱酷' }}" placeholder="例如：爱酷" />
@@ -81,6 +107,39 @@
             <div class="form-row">
               <div class="label">顶部副标题</div>
               <input class="input" name="brand_sub" value="{{ brand_sub or 'AIKU CHINA VERIFICATION CENTER' }}" placeholder="例如：AIKU CHINA VERIFICATION CENTER" />
+            </div>
+            <div class="form-row">
+              <div class="label">隐藏内容</div>
+              <div class="visibility-group">
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_result_product_name" {% if not show_result_product_name %}checked{% endif %} />
+                  <span>隐藏结果产品名</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_batch_date" {% if not show_batch_date %}checked{% endif %} />
+                  <span>隐藏生产日期</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_recent_events" {% if not show_recent_events %}checked{% endif %} />
+                  <span>隐藏最近验证时间</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_recommendations" {% if not show_recommendations %}checked{% endif %} />
+                  <span>隐藏官方推荐</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_product_info" {% if not show_product_info %}checked{% endif %} />
+                  <span>隐藏产品信息</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_brand_traceability" {% if not show_brand_traceability %}checked{% endif %} />
+                  <span>隐藏品牌溯源</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_about_us" {% if not show_about_us %}checked{% endif %} />
+                  <span>隐藏关于我们</span>
+                </label>
+              </div>
             </div>
             <div class="actions">
               <button class="btn btn-primary" type="submit">保存</button>
@@ -96,7 +155,13 @@
             <div class="phone-note">完整手机页面渲染，展示扫码后的防伪查询页面。</div>
             <div class="phone-shell">
               {% if preview_url %}
-                <iframe src="{{ preview_url }}" title="防伪页预览" loading="lazy"></iframe>
+                <iframe
+                  id="verifyPreviewFrame"
+                  src="{{ preview_url }}"
+                  data-preview-base-url="{{ preview_url }}"
+                  title="防伪页预览"
+                  loading="lazy"
+                ></iframe>
               {% else %}
                 <div style="height:100%; display:flex; align-items:center; justify-content:center; padding:16px; text-align:center; color: var(--muted); font-size:13px; line-height:1.6;">暂无可用防伪码<br/>请先新建批次后预览</div>
               {% endif %}
@@ -109,4 +174,43 @@
       </aside>
     </div>
   </div>
+  <script>
+    (function () {
+      var form = document.getElementById("verifySettingsForm");
+      var frame = document.getElementById("verifyPreviewFrame");
+      if (!form || !frame) return;
+
+      var baseUrl = frame.getAttribute("data-preview-base-url");
+      if (!baseUrl) return;
+
+      var timer = null;
+
+      function syncPreview() {
+        var url = new URL(baseUrl, window.location.origin);
+        var data = new FormData(form);
+        data.forEach(function (value, key) {
+          if (key === "visibility_form") return;
+          var text = String(value || "").trim();
+          if (!text) return;
+          url.searchParams.set(key, text);
+        });
+        var nextSrc = url.pathname + "?" + url.searchParams.toString();
+        if (frame.getAttribute("src") !== nextSrc) {
+          frame.setAttribute("src", nextSrc);
+        }
+      }
+
+      function scheduleSync() {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(syncPreview, 120);
+      }
+
+      form.querySelectorAll("input").forEach(function (input) {
+        input.addEventListener(input.type === "checkbox" ? "change" : "input", scheduleSync);
+        if (input.type !== "checkbox") {
+          input.addEventListener("change", scheduleSync);
+        }
+      });
+    })();
+  </script>
 {% endblock %}

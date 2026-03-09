@@ -53,11 +53,18 @@ def test_admin_generic_settings_page_has_editor_and_preview(admin_client_and_ses
     assert r.status_code == 200
     assert "通用页设置" in r.text
     assert "左侧设置，右侧手机整页预览" in r.text
-    assert f'src="/verify/general?product_id={product_id}"' in r.text
+    assert f'src="/verify/general?product_id={product_id}&preview=1"' in r.text
     assert 'name="generic_message"' in r.text
     assert 'name="brand_mark"' in r.text
     assert 'name="brand_name"' in r.text
     assert 'name="brand_sub"' in r.text
+    assert 'name="hide_product_name"' in r.text
+    assert 'name="hide_batch_date"' in r.text
+    assert 'name="hide_recommendations"' in r.text
+    assert 'name="hide_product_info"' in r.text
+    assert 'name="hide_brand_traceability"' in r.text
+    assert 'name="hide_about_us"' in r.text
+    assert 'id="genericPreviewFrame"' in r.text
     assert r.text.index('name="brand_sub"') < r.text.index('name="generic_message"')
     assert (
         r.text.index(f'href="/admin/products/{product_id}/verify-page-settings"')
@@ -144,3 +151,33 @@ def test_admin_generic_settings_submit_keeps_brand_fields(admin_client_and_sessi
     assert "测标" in r.text
     assert "可编辑标题" in r.text
     assert "EDITABLE SUBTITLE" in r.text
+
+
+def test_admin_generic_settings_submit_persists_visibility_flags(admin_client_and_sessionmaker):
+    client, SessionLocal = admin_client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="P4", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+        db.add(Batch(product_id=product_id, production_date=date(2026, 3, 8), note=""))
+        db.commit()
+
+    submit = client.post(
+        f"/admin/products/{product_id}/generic-settings",
+        data={
+            "hide_batch_date": "on",
+            "hide_product_info": "on",
+        },
+        follow_redirects=False,
+    )
+    assert submit.status_code in (302, 303)
+
+    with SessionLocal() as db:
+        row = db.query(PageContent).filter_by(key=f"product:{product_id}:generic_settings").one()
+        assert row.content_json["show_batch_date"] is False
+        assert row.content_json["show_product_info"] is False
+        assert row.content_json["show_product_name"] is True

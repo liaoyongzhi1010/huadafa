@@ -19,6 +19,14 @@ _DEFAULT_BRAND_SETTINGS: dict[str, str] = {
     "brand_name": "中国爱酷防伪中心",
     "brand_sub": "AIKU CHINA VERIFICATION CENTER",
 }
+_DEFAULT_GENERIC_VISIBILITY: dict[str, bool] = {
+    "show_product_name": True,
+    "show_batch_date": True,
+    "show_recommendations": True,
+    "show_product_info": True,
+    "show_brand_traceability": True,
+    "show_about_us": True,
+}
 
 
 def _require_admin(request: Request):
@@ -71,6 +79,7 @@ def _load_product_generic_settings(
     default_brand_settings: dict[str, str],
 ) -> dict[str, object]:
     settings = {
+        **_DEFAULT_GENERIC_VISIBILITY,
         "show_product_name": default_show_product_name,
         "show_batch_date": default_show_batch_date,
         "generic_message": default_message,
@@ -84,10 +93,9 @@ def _load_product_generic_settings(
         return settings
 
     payload = row.content_json
-    if "show_product_name" in payload:
-        settings["show_product_name"] = bool(payload.get("show_product_name"))
-    if "show_batch_date" in payload:
-        settings["show_batch_date"] = bool(payload.get("show_batch_date"))
+    for key in _DEFAULT_GENERIC_VISIBILITY:
+        if key in payload:
+            settings[key] = bool(payload.get(key))
     msg = str(payload.get("generic_message", "")).strip()
     if msg:
         settings["generic_message"] = msg
@@ -128,8 +136,12 @@ def product_generic_settings_page(request: Request, product_id: int, db: Session
         {
             "product": product,
             "active_tab": "generic_settings",
-            "show_product_name": bool(settings["show_product_name"]),
-            "show_batch_date": bool(settings["show_batch_date"]),
+            "hide_product_name": not bool(settings["show_product_name"]),
+            "hide_batch_date": not bool(settings["show_batch_date"]),
+            "hide_recommendations": not bool(settings["show_recommendations"]),
+            "hide_product_info": not bool(settings["show_product_info"]),
+            "hide_brand_traceability": not bool(settings["show_brand_traceability"]),
+            "hide_about_us": not bool(settings["show_about_us"]),
             "generic_message": str(settings["generic_message"]),
             "brand_mark": str(settings["brand_mark"]),
             "brand_name": str(settings["brand_name"]),
@@ -142,8 +154,13 @@ def product_generic_settings_page(request: Request, product_id: int, db: Session
 def product_generic_settings_submit(
     request: Request,
     product_id: int,
-    show_product_name: str | None = Form(None),
-    show_batch_date: str | None = Form(None),
+    visibility_form: str | None = Form(None),
+    hide_product_name: str | None = Form(None),
+    hide_batch_date: str | None = Form(None),
+    hide_recommendations: str | None = Form(None),
+    hide_product_info: str | None = Form(None),
+    hide_brand_traceability: str | None = Form(None),
+    hide_about_us: str | None = Form(None),
     generic_message: str = Form(""),
     brand_mark: str = Form(""),
     brand_name: str = Form(""),
@@ -166,12 +183,39 @@ def product_generic_settings_submit(
     existing = row.content_json if row is not None and isinstance(row.content_json, dict) else {}
     default_show_product_name = cfg.show_product_name if cfg is not None else True
     default_show_batch_date = cfg.show_batch_date if cfg is not None else True
-    preserved_show_product_name = bool(existing.get("show_product_name", default_show_product_name))
-    preserved_show_batch_date = bool(existing.get("show_batch_date", default_show_batch_date))
+    preserved_visibility = {
+        "show_product_name": bool(existing.get("show_product_name", default_show_product_name)),
+        "show_batch_date": bool(existing.get("show_batch_date", default_show_batch_date)),
+        "show_recommendations": bool(existing.get("show_recommendations", _DEFAULT_GENERIC_VISIBILITY["show_recommendations"])),
+        "show_product_info": bool(existing.get("show_product_info", _DEFAULT_GENERIC_VISIBILITY["show_product_info"])),
+        "show_brand_traceability": bool(
+            existing.get("show_brand_traceability", _DEFAULT_GENERIC_VISIBILITY["show_brand_traceability"])
+        ),
+        "show_about_us": bool(existing.get("show_about_us", _DEFAULT_GENERIC_VISIBILITY["show_about_us"])),
+    }
+
+    if visibility_form is not None or any(
+        value is not None
+        for value in (
+            hide_product_name,
+            hide_batch_date,
+            hide_recommendations,
+            hide_product_info,
+            hide_brand_traceability,
+            hide_about_us,
+        )
+    ):
+        preserved_visibility = {
+            "show_product_name": hide_product_name is None,
+            "show_batch_date": hide_batch_date is None,
+            "show_recommendations": hide_recommendations is None,
+            "show_product_info": hide_product_info is None,
+            "show_brand_traceability": hide_brand_traceability is None,
+            "show_about_us": hide_about_us is None,
+        }
 
     payload: dict[str, object] = {
-        "show_product_name": preserved_show_product_name,
-        "show_batch_date": preserved_show_batch_date,
+        **preserved_visibility,
         "generic_message": generic_message.strip() or default_message,
         "brand_mark": (
             brand_mark.strip()

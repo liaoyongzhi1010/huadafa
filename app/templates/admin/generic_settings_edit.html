@@ -43,6 +43,31 @@
       display: block;
       background: #fff;
     }
+    .visibility-group {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fafafa;
+    }
+    .visibility-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .visibility-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .visibility-option input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+    }
 
     @media (max-width: 1160px) {
       .editor-layout {
@@ -66,7 +91,8 @@
     <div class="editor-layout">
       <div>
         <div class="card">
-          <form class="form" method="post" action="/admin/products/{{ product.id }}/generic-settings">
+          <form class="form" method="post" action="/admin/products/{{ product.id }}/generic-settings" id="genericSettingsForm">
+            <input type="hidden" name="visibility_form" value="1" />
             <div class="form-row">
               <div class="label">顶部左侧标识</div>
               <input class="input" name="brand_mark" value="{{ brand_mark }}" placeholder="例如：爱酷" />
@@ -84,6 +110,35 @@
               <input class="input" name="generic_message" value="{{ generic_message }}" placeholder="例如：官方正品" />
               <div class="muted" style="font-size:12px;">展示在顶部副标题下方，建议简短，避免超过一行。</div>
             </div>
+            <div class="form-row">
+              <div class="label">隐藏内容</div>
+              <div class="visibility-group">
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_product_name" {% if hide_product_name %}checked{% endif %} />
+                  <span>隐藏产品名称</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_batch_date" {% if hide_batch_date %}checked{% endif %} />
+                  <span>隐藏生产日期</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_recommendations" {% if hide_recommendations %}checked{% endif %} />
+                  <span>隐藏官方推荐</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_product_info" {% if hide_product_info %}checked{% endif %} />
+                  <span>隐藏产品信息</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_brand_traceability" {% if hide_brand_traceability %}checked{% endif %} />
+                  <span>隐藏品牌溯源</span>
+                </label>
+                <label class="visibility-option">
+                  <input type="checkbox" name="hide_about_us" {% if hide_about_us %}checked{% endif %} />
+                  <span>隐藏关于我们</span>
+                </label>
+              </div>
+            </div>
             <div class="actions">
               <button class="btn btn-primary" type="submit">保存</button>
             </div>
@@ -97,11 +152,56 @@
             <div class="phone-title">手机整页预览：通用页</div>
             <div class="phone-note">完整手机页面渲染，展示当前产品通用二维码落地页。</div>
             <div class="phone-shell">
-              <iframe src="/verify/general?product_id={{ product.id }}" title="通用页预览" loading="lazy"></iframe>
+              <iframe
+                id="genericPreviewFrame"
+                src="/verify/general?product_id={{ product.id }}&preview=1"
+                data-preview-base-url="/verify/general?product_id={{ product.id }}&preview=1"
+                title="通用页预览"
+                loading="lazy"
+              ></iframe>
             </div>
           </div>
         </div>
       </aside>
     </div>
   </div>
+  <script>
+    (function () {
+      var form = document.getElementById("genericSettingsForm");
+      var frame = document.getElementById("genericPreviewFrame");
+      if (!form || !frame) return;
+
+      var baseUrl = frame.getAttribute("data-preview-base-url");
+      if (!baseUrl) return;
+
+      var timer = null;
+
+      function syncPreview() {
+        var url = new URL(baseUrl, window.location.origin);
+        var data = new FormData(form);
+        data.forEach(function (value, key) {
+          if (key === "visibility_form") return;
+          var text = String(value || "").trim();
+          if (!text) return;
+          url.searchParams.set(key, text);
+        });
+        var nextSrc = url.pathname + "?" + url.searchParams.toString();
+        if (frame.getAttribute("src") !== nextSrc) {
+          frame.setAttribute("src", nextSrc);
+        }
+      }
+
+      function scheduleSync() {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(syncPreview, 120);
+      }
+
+      form.querySelectorAll("input").forEach(function (input) {
+        input.addEventListener(input.type === "checkbox" ? "change" : "input", scheduleSync);
+        if (input.type !== "checkbox") {
+          input.addEventListener("change", scheduleSync);
+        }
+      });
+    })();
+  </script>
 {% endblock %}

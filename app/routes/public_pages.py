@@ -40,6 +40,28 @@ _DEFAULT_BRAND_SETTINGS: dict[str, str] = {
     "brand_name": "中国爱酷防伪中心",
     "brand_sub": "AIKU CHINA VERIFICATION CENTER",
 }
+_DEFAULT_VERIFY_PAGE_VISIBILITY: dict[str, bool] = {
+    "show_result_product_name": True,
+    "show_batch_date": True,
+    "show_recent_events": True,
+    "show_recommendations": True,
+    "show_product_info": True,
+    "show_brand_traceability": True,
+    "show_about_us": True,
+}
+_DEFAULT_GENERIC_VISIBILITY: dict[str, bool] = {
+    "show_product_name": True,
+    "show_batch_date": True,
+    "show_recommendations": True,
+    "show_product_info": True,
+    "show_brand_traceability": True,
+    "show_about_us": True,
+}
+_SECTION_VISIBILITY_FIELDS: dict[str, str] = {
+    "product_info": "show_product_info",
+    "brand_traceability": "show_brand_traceability",
+    "about_us": "show_about_us",
+}
 _SECTION_ID_RE = re.compile(r"^[a-z0-9_]{1,64}$")
 
 
@@ -124,8 +146,9 @@ def _verify_page_settings_storage_key(product_id: int) -> str:
     return f"product:{product_id}:verify_page_settings"
 
 
-def _load_verify_page_branding_for_product(db: Session, *, product_id: int) -> dict[str, str]:
-    settings = dict(_DEFAULT_BRAND_SETTINGS)
+def _load_verify_page_settings_for_product(db: Session, *, product_id: int) -> dict[str, object]:
+    settings: dict[str, object] = dict(_DEFAULT_BRAND_SETTINGS)
+    settings.update(_DEFAULT_VERIFY_PAGE_VISIBILITY)
     row = db.execute(
         select(PageContent).where(PageContent.key == _verify_page_settings_storage_key(product_id))
     ).scalar_one_or_none()
@@ -137,7 +160,25 @@ def _load_verify_page_branding_for_product(db: Session, *, product_id: int) -> d
         value = str(payload.get(key, "")).strip()
         if value:
             settings[key] = value
+    for key in _DEFAULT_VERIFY_PAGE_VISIBILITY:
+        if key in payload:
+            settings[key] = bool(payload.get(key))
     return settings
+
+
+def _filter_verify_sections(
+    sections: list[dict[str, object]],
+    *,
+    visibility_settings: dict[str, object],
+) -> list[dict[str, object]]:
+    filtered: list[dict[str, object]] = []
+    for section in sections:
+        section_id = str(section.get("id", "")).strip().lower()
+        visibility_key = _SECTION_VISIBILITY_FIELDS.get(section_id)
+        if visibility_key is not None and not bool(visibility_settings.get(visibility_key, True)):
+            continue
+        filtered.append(section)
+    return filtered
 
 
 def _section_content_key(*, product_id: int, section_id: str) -> str:
@@ -259,8 +300,9 @@ def _generic_settings_storage_key(product_id: int) -> str:
 
 
 def _load_generic_settings_for_product(db: Session, *, product_id: int, cfg: dict[str, object]) -> dict[str, object]:
-    default_branding = _load_verify_page_branding_for_product(db, product_id=product_id)
+    default_branding = _load_verify_page_settings_for_product(db, product_id=product_id)
     settings = {
+        **_DEFAULT_GENERIC_VISIBILITY,
         "generic_message": _generic_genuine_text(str(cfg["text_genuine"])),
         "show_product_name": bool(cfg["show_product_name"]),
         "show_batch_date": bool(cfg["show_batch_date"]),
@@ -275,10 +317,9 @@ def _load_generic_settings_for_product(db: Session, *, product_id: int, cfg: dic
         return settings
 
     payload = row.content_json
-    if "show_product_name" in payload:
-        settings["show_product_name"] = bool(payload.get("show_product_name"))
-    if "show_batch_date" in payload:
-        settings["show_batch_date"] = bool(payload.get("show_batch_date"))
+    for key in _DEFAULT_GENERIC_VISIBILITY:
+        if key in payload:
+            settings[key] = bool(payload.get(key))
     message = str(payload.get("generic_message", "")).strip()
     if message:
         settings["generic_message"] = message
@@ -293,6 +334,33 @@ def _is_preview_mode(value: str | None) -> bool:
     if value is None:
         return False
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _is_checked_value(value: str | None) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _preview_text_override(current_value: str, raw_value: str | None) -> str:
+    if raw_value is None:
+        return current_value
+    cleaned = raw_value.strip()
+    return cleaned or current_value
+
+
+def _apply_preview_visibility_overrides(
+    request: Request,
+    *,
+    visibility_settings: dict[str, object],
+    field_map: dict[str, str],
+) -> dict[str, object]:
+    overridden = dict(visibility_settings)
+    for query_key, setting_key in field_map.items():
+        if query_key not in request.query_params:
+            continue
+        overridden[setting_key] = not _is_checked_value(request.query_params.get(query_key))
+    return overridden
 
 
 @router.get("/verify")
@@ -313,6 +381,10 @@ def verify_page(
     warning_threshold = int(cfg["warning_threshold"])
     show_code = bool(cfg["show_code"])
     warning_active = False
+    show_result_product_name = True
+    show_batch_date = True
+    show_recent_events = True
+    show_recommendations = True
     recent_events: list[object] = []
     recommendations: list[dict[str, str]] = []
     page_content: dict[str, object] = {"brand_traceability": {}, "about_us": {}}
@@ -321,6 +393,10 @@ def verify_page(
     production_date = ""
     query_status_text = ""
     brand_settings = dict(_DEFAULT_BRAND_SETTINGS)
+    verify_page_settings: dict[str, object] = {
+        **_DEFAULT_BRAND_SETTINGS,
+        **_DEFAULT_VERIFY_PAGE_VISIBILITY,
+    }
 
     visitor_id = request.cookies.get("visitor_id")
     set_cookie = False
@@ -331,7 +407,35 @@ def verify_page(
     if _CODE_RE.match(code):
         anti_code = db.execute(select(AntiCode).where(AntiCode.code == code)).scalar_one_or_none()
         if anti_code is not None:
-            brand_settings = _load_verify_page_branding_for_product(db, product_id=anti_code.product_id)
+            verify_page_settings = _load_verify_page_settings_for_product(db, product_id=anti_code.product_id)
+            if preview_mode:
+                verify_page_settings = _apply_preview_visibility_overrides(
+                    request,
+                    visibility_settings=verify_page_settings,
+                    field_map={
+                        "hide_result_product_name": "show_result_product_name",
+                        "hide_batch_date": "show_batch_date",
+                        "hide_recent_events": "show_recent_events",
+                        "hide_recommendations": "show_recommendations",
+                        "hide_product_info": "show_product_info",
+                        "hide_brand_traceability": "show_brand_traceability",
+                        "hide_about_us": "show_about_us",
+                    },
+                )
+                for brand_key in ("brand_mark", "brand_name", "brand_sub"):
+                    verify_page_settings[brand_key] = _preview_text_override(
+                        str(verify_page_settings[brand_key]),
+                        request.query_params.get(brand_key),
+                    )
+            brand_settings = {
+                "brand_mark": str(verify_page_settings["brand_mark"]),
+                "brand_name": str(verify_page_settings["brand_name"]),
+                "brand_sub": str(verify_page_settings["brand_sub"]),
+            }
+            show_result_product_name = bool(verify_page_settings["show_result_product_name"])
+            show_batch_date = bool(verify_page_settings["show_batch_date"])
+            show_recent_events = bool(verify_page_settings["show_recent_events"])
+            show_recommendations = bool(verify_page_settings["show_recommendations"])
         if anti_code is not None and anti_code.status == "active" and (
             anti_code.batch is None or anti_code.batch.status == "active"
         ):
@@ -352,39 +456,44 @@ def verify_page(
                 scan_count = result.scan_count
             warning_active = scan_count >= warning_threshold
 
-            recent_limit = int(cfg["recent_events_limit"])
-            recent_dt = (
-                db.execute(
-                    select(ScanEvent.scanned_at)
-                    .where(ScanEvent.anti_code_id == anti_code.id)
-                    .order_by(ScanEvent.scanned_at.desc())
-                    .limit(recent_limit)
+            if show_recent_events:
+                recent_limit = int(cfg["recent_events_limit"])
+                recent_dt = (
+                    db.execute(
+                        select(ScanEvent.scanned_at)
+                        .where(ScanEvent.anti_code_id == anti_code.id)
+                        .order_by(ScanEvent.scanned_at.desc())
+                        .limit(recent_limit)
+                    )
+                    .scalars()
+                    .all()
                 )
-                .scalars()
-                .all()
-            )
-            recent_events = [_format_dt_shanghai(t) for t in recent_dt]
+                recent_events = [_format_dt_shanghai(t) for t in recent_dt]
 
             page_content = _load_page_content_for_product(db, anti_code.product_id)
 
             product_id = anti_code.product_id
-            recs = (
-                db.execute(
-                    select(Recommendation)
-                    .where(
-                        Recommendation.image_url != "",
-                        Recommendation.product_id == product_id,
+            if show_recommendations:
+                recs = (
+                    db.execute(
+                        select(Recommendation)
+                        .where(
+                            Recommendation.image_url != "",
+                            Recommendation.product_id == product_id,
+                        )
+                        .order_by(Recommendation.sort_order.asc(), Recommendation.id.asc())
                     )
-                    .order_by(Recommendation.sort_order.asc(), Recommendation.id.asc())
+                    .scalars()
+                    .all()
                 )
-                .scalars()
-                .all()
-            )
-            recommendations = [{"image_url": r.image_url, "target_url": r.target_url} for r in recs]
+                recommendations = [{"image_url": r.image_url, "target_url": r.target_url} for r in recs]
 
             p = anti_code.product
             message = p.name.strip() or str(cfg["text_genuine"])
-            verify_sections = _load_verify_sections_payload(db, product=p, page_content=page_content)
+            verify_sections = _filter_verify_sections(
+                _load_verify_sections_payload(db, product=p, page_content=page_content),
+                visibility_settings=verify_page_settings,
+            )
             product = {
                 "id": p.id,
                 "name": p.name,
@@ -414,6 +523,10 @@ def verify_page(
             "warning_active": warning_active,
             "text_warning": str(cfg["text_warning"]),
             "contact_us_url": str(cfg["contact_us_url"]),
+            "show_result_product_name": show_result_product_name,
+            "show_batch_date": show_batch_date,
+            "show_recent_events": show_recent_events,
+            "show_recommendations": show_recommendations,
             "recent_events": recent_events,
             "recommendations": recommendations,
             "product": product,
@@ -443,6 +556,7 @@ def verify_page(
 def verify_general_page(request: Request, product_id: int, db: Session = Depends(get_db)):
     cfg = _load_verify_config(db)
     generic_settings = _load_generic_settings_for_product(db, product_id=product_id, cfg=cfg)
+    preview_mode = _is_preview_mode(request.query_params.get("preview"))
     product = db.execute(select(Product).where(Product.id == product_id)).scalar_one_or_none()
 
     if product is None:
@@ -453,6 +567,7 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
                 "message": "未查询到产品信息",
                 "show_product_name": False,
                 "show_batch_date": False,
+                "show_recommendations": False,
                 "product_name": "",
                 "batch_date": "",
                 "verify_sections": [],
@@ -463,6 +578,29 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
                 "brand_sub": _DEFAULT_BRAND_SETTINGS["brand_sub"],
             },
         )
+
+    if preview_mode:
+        generic_settings = _apply_preview_visibility_overrides(
+            request,
+            visibility_settings=generic_settings,
+            field_map={
+                "hide_product_name": "show_product_name",
+                "hide_batch_date": "show_batch_date",
+                "hide_recommendations": "show_recommendations",
+                "hide_product_info": "show_product_info",
+                "hide_brand_traceability": "show_brand_traceability",
+                "hide_about_us": "show_about_us",
+            },
+        )
+        generic_settings["generic_message"] = _preview_text_override(
+            str(generic_settings["generic_message"]),
+            request.query_params.get("generic_message"),
+        )
+        for brand_key in ("brand_mark", "brand_name", "brand_sub"):
+            generic_settings[brand_key] = _preview_text_override(
+                str(generic_settings[brand_key]),
+                request.query_params.get(brand_key),
+            )
 
     batch = (
         db.execute(
@@ -481,21 +619,26 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
         batch_date = product.created_at.date().isoformat()
 
     page_content = _load_page_content_for_product(db, product_id=product_id)
-    verify_sections = _load_verify_sections_payload(db, product=product, page_content=page_content)
-
-    recs = (
-        db.execute(
-            select(Recommendation)
-            .where(
-                Recommendation.image_url != "",
-                Recommendation.product_id == product_id,
-            )
-            .order_by(Recommendation.sort_order.asc(), Recommendation.id.asc())
-        )
-        .scalars()
-        .all()
+    verify_sections = _filter_verify_sections(
+        _load_verify_sections_payload(db, product=product, page_content=page_content),
+        visibility_settings=generic_settings,
     )
-    recommendations = [{"image_url": r.image_url, "target_url": r.target_url} for r in recs]
+
+    recommendations: list[dict[str, str]] = []
+    if bool(generic_settings["show_recommendations"]):
+        recs = (
+            db.execute(
+                select(Recommendation)
+                .where(
+                    Recommendation.image_url != "",
+                    Recommendation.product_id == product_id,
+                )
+                .order_by(Recommendation.sort_order.asc(), Recommendation.id.asc())
+            )
+            .scalars()
+            .all()
+        )
+        recommendations = [{"image_url": r.image_url, "target_url": r.target_url} for r in recs]
 
     return templates.TemplateResponse(
         request,
@@ -504,6 +647,7 @@ def verify_general_page(request: Request, product_id: int, db: Session = Depends
             "message": str(generic_settings["generic_message"]),
             "show_product_name": bool(generic_settings["show_product_name"]),
             "show_batch_date": bool(generic_settings["show_batch_date"]),
+            "show_recommendations": bool(generic_settings["show_recommendations"]),
             "product_name": product.name,
             "batch_date": batch_date,
             "verify_sections": verify_sections,

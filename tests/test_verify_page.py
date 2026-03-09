@@ -240,6 +240,160 @@ def test_verify_page_preserves_year_precision_batch_date(client_and_sessionmaker
     assert "2026" in r.text
 
 
+def test_verify_page_hides_disabled_blocks(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(
+            name="HIDE-VERIFY-NAME",
+            detail_text="不该再显示的产品信息",
+            detail_images=[{"url": "/uploads/products/1/hide.png"}],
+        )
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+        batch = Batch(product_id=product.id, production_date="2026-03", note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        anti = AntiCode(code="2026031020260310", product_id=product.id, batch_id=batch.id, scan_count=1)
+        db.add(anti)
+        db.commit()
+        db.refresh(anti)
+
+        db.add(
+            ScanEvent(
+                anti_code_id=anti.id,
+                scanned_at=datetime(2026, 3, 10, 12, 0, 0, tzinfo=timezone.utc),
+                visitor_id="v1",
+                ip_hash="",
+                ua_hash="",
+            )
+        )
+        db.add_all(
+            [
+                Recommendation(
+                    product_id=product.id,
+                    image_url="https://img.example/hide-reco.png",
+                    target_url="https://example.com/hide-reco",
+                    enabled=True,
+                    sort_order=10,
+                ),
+                PageContent(
+                    key=f"product:{product.id}:verify_page_settings",
+                    content_json={
+                        "show_result_product_name": False,
+                        "show_batch_date": False,
+                        "show_recent_events": False,
+                        "show_recommendations": False,
+                        "show_product_info": False,
+                        "show_brand_traceability": False,
+                        "show_about_us": False,
+                    },
+                ),
+                PageContent(key=f"product:{product.id}:brand_traceability", content_json={"text": "隐藏品牌溯源"}),
+                PageContent(key=f"product:{product.id}:about_us", content_json={"text": "隐藏关于我们"}),
+            ]
+        )
+        db.commit()
+
+    r = client.get("/verify", params={"code": "2026031020260310"}, cookies={"visitor_id": "v2"})
+    assert r.status_code == 200
+    assert "HIDE-VERIFY-NAME" not in r.text
+    assert "生产日期" not in r.text
+    assert "最近验证时间" not in r.text
+    assert "官方推荐" not in r.text
+    assert "暂无推荐" not in r.text
+    assert "产品信息" not in r.text
+    assert "品牌溯源" not in r.text
+    assert "关于我们" not in r.text
+    assert "不该再显示的产品信息" not in r.text
+    assert "隐藏品牌溯源" not in r.text
+    assert "隐藏关于我们" not in r.text
+
+
+def test_verify_page_preview_mode_applies_query_overrides(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(
+            name="PREVIEW-VERIFY-NAME",
+            detail_text="预览模式产品信息",
+            detail_images=[{"url": "/uploads/products/1/preview.png"}],
+        )
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+        batch = Batch(product_id=product.id, production_date="2026-03-10", note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        anti = AntiCode(code="2026031020260311", product_id=product.id, batch_id=batch.id, scan_count=1)
+        db.add(anti)
+        db.commit()
+        db.refresh(anti)
+
+        db.add(
+            ScanEvent(
+                anti_code_id=anti.id,
+                scanned_at=datetime(2026, 3, 10, 12, 0, 0, tzinfo=timezone.utc),
+                visitor_id="v1",
+                ip_hash="",
+                ua_hash="",
+            )
+        )
+        db.add_all(
+            [
+                Recommendation(
+                    product_id=product.id,
+                    image_url="https://img.example/preview-hide-reco.png",
+                    target_url="https://example.com/preview-hide-reco",
+                    enabled=True,
+                    sort_order=10,
+                ),
+                PageContent(key=f"product:{product.id}:brand_traceability", content_json={"text": "预览品牌溯源"}),
+                PageContent(key=f"product:{product.id}:about_us", content_json={"text": "预览关于我们"}),
+            ]
+        )
+        db.commit()
+
+    r = client.get(
+        "/verify",
+        params={
+            "code": "2026031020260311",
+            "preview": "1",
+            "hide_result_product_name": "1",
+            "hide_batch_date": "1",
+            "hide_recent_events": "1",
+            "hide_recommendations": "1",
+            "hide_product_info": "1",
+            "hide_brand_traceability": "1",
+            "hide_about_us": "1",
+            "brand_mark": "预览标识",
+            "brand_name": "预览标题",
+            "brand_sub": "PREVIEW SUB",
+        },
+    )
+    assert r.status_code == 200
+    assert "PREVIEW-VERIFY-NAME" not in r.text
+    assert "生产日期" not in r.text
+    assert "最近验证时间" not in r.text
+    assert "官方推荐" not in r.text
+    assert "产品信息" not in r.text
+    assert "品牌溯源" not in r.text
+    assert "关于我们" not in r.text
+    assert "预览模式产品信息" not in r.text
+    assert "预览品牌溯源" not in r.text
+    assert "预览关于我们" not in r.text
+    assert "预览标识" in r.text
+    assert "预览标题" in r.text
+    assert "PREVIEW SUB" in r.text
+
+
 def test_verify_page_shows_not_found_message(client_and_sessionmaker):
     client, _ = client_and_sessionmaker
 
@@ -429,6 +583,142 @@ def test_verify_generic_page_preserves_month_precision_batch_date(client_and_ses
     assert r.status_code == 200
     assert "生产日期" in r.text
     assert "2026-02" in r.text
+
+
+def test_verify_generic_page_hides_disabled_blocks(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(
+            name="HIDE-GENERIC-NAME",
+            detail_text="通用页隐藏产品信息",
+            detail_images=[{"url": "/uploads/products/generic/hide.png"}],
+        )
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+        batch = Batch(product_id=product.id, production_date="2026-03-10", note="")
+        db.add(batch)
+        db.commit()
+
+        db.add_all(
+            [
+                Recommendation(
+                    product_id=product_id,
+                    image_url="https://img.example/generic-hide.png",
+                    target_url="https://example.com/generic-hide",
+                    enabled=True,
+                    sort_order=10,
+                ),
+                PageContent(
+                    key=f"product:{product_id}:generic_settings",
+                    content_json={
+                        "show_product_name": False,
+                        "show_batch_date": False,
+                        "show_recommendations": False,
+                        "show_product_info": False,
+                        "show_brand_traceability": False,
+                        "show_about_us": False,
+                    },
+                ),
+                PageContent(
+                    key=f"product:{product_id}:brand_traceability",
+                    content_json={"blocks": [{"type": "text", "text": "通用页隐藏品牌溯源"}]},
+                ),
+                PageContent(
+                    key=f"product:{product_id}:about_us",
+                    content_json={"blocks": [{"type": "text", "text": "通用页隐藏关于我们"}]},
+                ),
+            ]
+        )
+        db.commit()
+
+    r = client.get("/verify/general", params={"product_id": str(product_id)})
+    assert r.status_code == 200
+    assert "HIDE-GENERIC-NAME" not in r.text
+    assert "生产日期" not in r.text
+    assert "官方推荐" not in r.text
+    assert "暂无推荐" not in r.text
+    assert "产品信息" not in r.text
+    assert "品牌溯源" not in r.text
+    assert "关于我们" not in r.text
+    assert "通用页隐藏产品信息" not in r.text
+    assert "通用页隐藏品牌溯源" not in r.text
+    assert "通用页隐藏关于我们" not in r.text
+
+
+def test_verify_generic_page_preview_mode_applies_query_overrides(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(
+            name="PREVIEW-GENERIC-NAME",
+            detail_text="通用页预览产品信息",
+            detail_images=[{"url": "/uploads/products/generic/preview.png"}],
+        )
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+        batch = Batch(product_id=product.id, production_date="2026-03-10", note="")
+        db.add(batch)
+        db.commit()
+
+        db.add_all(
+            [
+                Recommendation(
+                    product_id=product_id,
+                    image_url="https://img.example/generic-preview-hide.png",
+                    target_url="https://example.com/generic-preview-hide",
+                    enabled=True,
+                    sort_order=10,
+                ),
+                PageContent(
+                    key=f"product:{product_id}:brand_traceability",
+                    content_json={"blocks": [{"type": "text", "text": "通用页预览品牌溯源"}]},
+                ),
+                PageContent(
+                    key=f"product:{product_id}:about_us",
+                    content_json={"blocks": [{"type": "text", "text": "通用页预览关于我们"}]},
+                ),
+            ]
+        )
+        db.commit()
+
+    r = client.get(
+        "/verify/general",
+        params={
+            "product_id": str(product_id),
+            "preview": "1",
+            "hide_product_name": "1",
+            "hide_batch_date": "1",
+            "hide_recommendations": "1",
+            "hide_product_info": "1",
+            "hide_brand_traceability": "1",
+            "hide_about_us": "1",
+            "generic_message": "预览通用文案",
+            "brand_mark": "通用预览标",
+            "brand_name": "通用预览标题",
+            "brand_sub": "GENERIC PREVIEW SUB",
+        },
+    )
+    assert r.status_code == 200
+    assert "PREVIEW-GENERIC-NAME" not in r.text
+    assert "生产日期" not in r.text
+    assert "官方推荐" not in r.text
+    assert "产品信息" not in r.text
+    assert "品牌溯源" not in r.text
+    assert "关于我们" not in r.text
+    assert "通用页预览产品信息" not in r.text
+    assert "通用页预览品牌溯源" not in r.text
+    assert "通用页预览关于我们" not in r.text
+    assert "预览通用文案" in r.text
+    assert "通用预览标" in r.text
+    assert "通用预览标题" in r.text
+    assert "GENERIC PREVIEW SUB" in r.text
 
 
 def test_verify_generic_page_shows_recommendations_when_configured(client_and_sessionmaker):
