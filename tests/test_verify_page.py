@@ -217,6 +217,29 @@ def test_verify_page_multi_scan_shows_queried_text(client_and_sessionmaker):
     assert "已被查询过" in r.text
 
 
+def test_verify_page_preserves_year_precision_batch_date(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="YEAR-P", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+        batch = Batch(product_id=product.id, production_date="2026", note="")
+        db.add(batch)
+        db.commit()
+        db.refresh(batch)
+
+        db.add(AntiCode(code="4444555566667777", product_id=product.id, batch_id=batch.id, scan_count=0))
+        db.commit()
+
+    r = client.get("/verify", params={"code": "4444555566667777"})
+    assert r.status_code == 200
+    assert "生产日期" in r.text
+    assert "2026" in r.text
+
+
 def test_verify_page_shows_not_found_message(client_and_sessionmaker):
     client, _ = client_and_sessionmaker
 
@@ -386,6 +409,26 @@ def test_verify_generic_page_shows_product_and_batch_info(client_and_sessionmake
     assert "中国爱酷防伪中心" in r.text
     assert "爱酷，中国爱酷防伪中心" not in r.text
     assert "爱酷，中国爱酷" not in r.text
+
+
+def test_verify_generic_page_preserves_month_precision_batch_date(client_and_sessionmaker):
+    client, SessionLocal = client_and_sessionmaker
+
+    with SessionLocal() as db:
+        product = Product(name="MONTH-P", detail_text="", detail_images=[])
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+        product_id = product.id
+
+        batch = Batch(product_id=product.id, production_date="2026-02", note="")
+        db.add(batch)
+        db.commit()
+
+    r = client.get("/verify/general", params={"product_id": str(product_id)})
+    assert r.status_code == 200
+    assert "生产日期" in r.text
+    assert "2026-02" in r.text
 
 
 def test_verify_generic_page_shows_recommendations_when_configured(client_and_sessionmaker):

@@ -32,7 +32,7 @@ def export_batch_codes_csv(*, db: Session, batch_id: int, base_url: str) -> str:
         writer.writerow(
             [
                 product.name,
-                batch.production_date.isoformat(),
+                batch.production_date,
                 code,
                 f"{base_url}/verify?code={code}",
             ]
